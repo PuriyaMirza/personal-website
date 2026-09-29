@@ -40,9 +40,9 @@ nav a{font-size:clamp(10px,1.1vw,16px);letter-spacing:.38em;text-transform:upper
 .season .ph.s-kyoto,.season .overlay.s-kyoto{left:7.7%;top:6%;width:38.2%;height:66.3%}
 .season .ph.s-paris,.season .overlay.s-paris{left:54.1%;top:27.5%;width:38.2%;height:66.3%}
 .season-title{position:absolute;left:36.6%;top:11.4%;font-size:8.47vw;line-height:.98;z-index:2}
-.s-note{position:absolute;top:70%;width:17.9%;font-size:clamp(11px,1.1vw,16px);letter-spacing:.02em;line-height:1.55;z-index:2}
+.s-note{position:absolute;top:74.5%;width:17.9%;font-size:clamp(11px,1.1vw,16px);letter-spacing:.02em;line-height:1.55;z-index:2}
 .s-note-1{left:7.7%} .s-note-2{left:27.7%}
-.s-link{position:absolute;left:50%;transform:translateX(-50%);top:90.5%;z-index:2;white-space:nowrap}
+.s-link{position:absolute;left:50%;transform:translateX(-50%);top:92.3%;z-index:2;white-space:nowrap}
 
 /* SELECTED */
 .selected{position:relative;background:#fff;color:#000;height:52.3vw;overflow:hidden}
