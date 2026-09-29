@@ -1,0 +1,137 @@
+:root{
+  --charcoal:#191a18; --closer:#37342e; --ink:#211f1f;
+  --display:'Cormorant',Garamond,serif; --body:'Jost',system-ui,sans-serif;
+  --gut:clamp(20px,7.7vw,111px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);font-weight:300;color:#fff;background:#fff;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+h1,h2{font-family:var(--display);font-weight:300;text-transform:uppercase;line-height:.95}
+.ph{position:absolute;background:#6b645c center/cover no-repeat}
+.overlay{position:absolute;inset:0;pointer-events:none}
+.o35{background:rgba(0,0,0,.35)} .o30{background:rgba(0,0,0,.30)}
+.link{font-size:16px;font-weight:400;letter-spacing:.02em;border-bottom:1px solid currentColor;padding-bottom:3px;display:inline-block}
+.link.dark{color:#000}
+
+/* images (drop JPGs into ./img) */
+#p-hero{background-image:url(img/hero-delhi.jpg)}
+.s-kyoto.ph,.c-kyoto{background-image:url(img/kyoto.jpg)}
+.s-paris.ph,.c-paris{background-image:url(img/paris.jpg)}
+.sel-photo,.c-rio{background-image:url(img/rio.jpg)}
+.c-delhi{background-image:url(img/delhi.jpg)}
+.cl-a{background-image:url(img/barcelona.jpg)}
+.cl-b{background-image:url(img/lake.jpg)}
+
+/* HERO */
+.hero{position:relative;height:max(560px,55.3vw);overflow:hidden}
+.hero .ph,.hero .overlay{inset:0}
+.hero-top{position:absolute;top:2.5vw;left:0;right:0;text-align:center}
+.wordmark{font-family:var(--display);font-weight:300;text-transform:uppercase;font-size:clamp(34px,5.55vw,80px);line-height:1.2;display:block}
+nav{margin-top:.4vw;display:flex;justify-content:center;gap:clamp(14px,3.2vw,46px)}
+nav a{font-size:clamp(10px,1.1vw,16px);letter-spacing:.38em;text-transform:uppercase;padding-left:.38em}
+.hero-center{position:absolute;left:0;right:0;top:26.2vw;text-align:center}
+.hero-center h1{font-size:clamp(28px,2.92vw,42px);letter-spacing:.05em;line-height:1.2;margin-bottom:1.3vw}
+
+/* SEASON */
+.season{position:relative;background:var(--charcoal);aspect-ratio:1440/1038;overflow:hidden}
+.season .ph,.season .overlay{position:absolute}
+.s-kyoto{left:7.7%;top:6%;width:38.2%;height:66.3%;inset:auto}
+.season .ph.s-kyoto,.season .overlay.s-kyoto{left:7.7%;top:6%;width:38.2%;height:66.3%}
+.season .ph.s-paris,.season .overlay.s-paris{left:54.1%;top:27.5%;width:38.2%;height:66.3%}
+.season-title{position:absolute;left:36.6%;top:11.4%;font-size:8.47vw;line-height:.98;z-index:2}
+.s-note{position:absolute;top:70%;width:17.9%;font-size:clamp(11px,1.1vw,16px);letter-spacing:.02em;line-height:1.55;z-index:2}
+.s-note-1{left:7.7%} .s-note-2{left:27.7%}
+.s-link{position:absolute;left:50%;transform:translateX(-50%);top:90.5%;z-index:2;white-space:nowrap}
+
+/* SELECTED */
+.selected{position:relative;background:#fff;color:#000;height:52.3vw;overflow:hidden}
+.sel-photo{left:-6.8%;top:4.2%;width:63.1%;height:84%}
+.sel-text{position:absolute;left:60%;top:6.4%;width:36.5%}
+.num{font-weight:600;font-size:clamp(11px,1.1vw,16px);letter-spacing:.02em;margin-bottom:1vw}
+.selected h2{color:var(--ink);font-size:6.4vw;line-height:.95;margin-bottom:5vw}
+.body{font-size:clamp(11px,1.1vw,16px);letter-spacing:.02em;line-height:1.6;margin-bottom:3.5vw}
+.short-rule{display:block;width:127px;height:1px;background:#000;margin-bottom:3.4vw}
+
+/* DESTINATIONS */
+.dest{position:relative;background:#fff;color:#000;height:min(2vw + 44.7vw,660px);padding-top:1.8vw}
+.dest{height:auto;padding:1.8vw 0 6vw 4.1vw}
+.vrule{position:absolute;left:2.65vw;top:0;width:1px;height:42.6vw;background:rgba(0,0,0,.35)}
+.dest h2{color:var(--ink);font-size:6.4vw;line-height:1.1;margin-bottom:1.4vw;padding-left:0}
+.cards{display:grid;grid-template-columns:repeat(4,21.1vw);gap:2.3vw;padding-left:.4vw}
+.card{display:block;position:relative}
+.card .ph{position:relative;display:block;width:100%;aspect-ratio:304/380;margin-bottom:1vw}
+.card b{display:block;font-weight:400;font-size:clamp(11px,1.1vw,16px);letter-spacing:0;text-transform:uppercase}
+.card i{display:block;font-style:normal;font-size:clamp(11px,1.1vw,16px);opacity:.3;margin:.2vw 0 .6vw}
+.card span{font-size:clamp(12px,1.25vw,18px)}
+
+/* CLOSER */
+.closer{position:relative;height:50vw;overflow:hidden;background:var(--closer)}
+.cl-a{left:0;top:0;width:50%;height:100%}
+.cl-b{left:50%;top:0;width:50%;height:100%}
+.cl-ov{background:rgba(55,52,46,.5)}
+.cl-center{position:absolute;left:0;right:0;top:38.9%;text-align:center}
+.cl-center h2{font-size:6.4vw;line-height:1.05;margin-bottom:1.7vw}
+.cl-note{position:absolute;right:1.9%;bottom:6%;width:25.9%;font-size:clamp(11px,1.1vw,16px);letter-spacing:.02em;line-height:1.55}
+.edge{position:absolute;font-size:clamp(13px,1.5vw,22px);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.edge-l{left:1.2vw;bottom:1.5vw;writing-mode:vertical-rl;transform:rotate(180deg)}
+.edge-r{right:1.2vw;top:1.5vw;writing-mode:vertical-rl}
+
+/* FOOTER */
+footer{background:var(--charcoal);color:#fff}
+.f-main{display:grid;grid-template-columns:22.5% 13.8% 13.8% 1fr;padding:2.5vw 5.6vw 3vw;gap:2vw;min-height:20vw}
+.f-mark{font-family:var(--display);text-transform:uppercase;font-size:clamp(34px,4.4vw,64px);line-height:.95}
+.f-col a,.f-col h3,.f-news h3{display:block;font-size:clamp(11px,1.1vw,16px);text-transform:uppercase;letter-spacing:0;margin-bottom:.9vw}
+.f-col h3,.f-news h3{font-weight:600;margin-bottom:1.4vw}
+.f-col a{margin-bottom:1vw}
+.f-news{max-width:355px}
+.f-news p{font-size:clamp(11px,1.1vw,16px);line-height:1.5;margin-bottom:1.3vw}
+.in{display:flex;border-bottom:1px solid #fff}
+.in input{flex:1;background:none;border:0;color:#fff;font:300 clamp(11px,1.1vw,16px) var(--body);padding:.4vw 0 .7vw;outline:none}
+.in input::placeholder{color:rgba(255,255,255,.3)}
+.in button{background:none;border:0;color:#fff;font:300 18px var(--body);cursor:pointer}
+.f-legal{display:flex;justify-content:space-between;padding:1.9vw 5.6vw;border-top:1px solid rgba(255,255,255,.4);font-size:clamp(10px,1.1vw,16px);text-transform:uppercase}
+
+.sample-tag{position:fixed;left:14px;bottom:14px;z-index:50;background:rgba(25,26,24,.85);color:#fff;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:8px 12px;border-radius:99px;backdrop-filter:blur(6px)}
+
+/* MOBILE */
+@media (max-width:760px){
+  .sample-tag{font-size:9px;padding:6px 10px;white-space:nowrap;bottom:10px;left:10px}
+  .hero{height:max(520px,135vw)}
+  .hero-top{top:30px}
+  .wordmark{font-size:30px}
+  nav{gap:12px;margin-top:10px} nav a{font-size:9px;letter-spacing:.28em}
+  .hero-center{top:52%}
+  .hero-center h1{font-size:28px;margin-bottom:14px}
+  .season{aspect-ratio:auto;padding:44px 20px 56px;display:flex;flex-direction:column;gap:22px}
+  .season .ph,.season .overlay{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:auto!important}
+  .season .ph{aspect-ratio:4/5} .season .overlay{display:none}
+  .season .ph.s-paris{order:3}
+  .season-title{position:relative;left:auto;top:auto;font-size:52px;order:1;margin:0 0 4px}
+  .s-kyoto{order:2}
+  .s-note{position:relative;width:auto;top:auto;left:auto!important;font-size:14px;order:4}
+  .s-link{position:relative;transform:none;left:auto;top:auto;order:5;align-self:flex-start}
+  .selected{height:auto;padding:44px 20px}
+  .sel-photo{position:relative;left:auto;top:auto;width:100%;height:auto;aspect-ratio:4/3;margin-bottom:28px}
+  .sel-text{position:relative;left:auto;top:auto;width:auto}
+  .selected h2{font-size:48px;margin-bottom:20px}
+  .num,.body,.card b,.card i{font-size:14px}
+  .body{margin-bottom:24px} .short-rule{margin-bottom:20px}
+  .dest{padding:36px 20px 48px}
+  .vrule{display:none}
+  .dest h2{font-size:46px;margin-bottom:22px}
+  .cards{grid-template-columns:1fr 1fr;gap:22px 14px;padding:0}
+  .card .ph{margin-bottom:10px}
+  .closer{height:auto;min-height:560px;padding:80px 20px 40px}
+  .cl-a{width:100%;height:50%;top:0;left:0} .cl-b{width:100%;height:50%;top:50%;left:0}
+  .cl-center{position:relative;top:auto;z-index:2;margin-bottom:180px}
+  .cl-center h2{font-size:44px;margin-bottom:18px}
+  .cl-note{position:relative;right:auto;bottom:auto;width:auto;font-size:14px;z-index:2}
+  .edge{display:none}
+  .f-main{grid-template-columns:1fr 1fr;padding:36px 20px;gap:30px 16px}
+  .f-mark{grid-column:1/-1;font-size:44px}
+  .f-news{grid-column:1/-1;max-width:none}
+  .f-col a,.f-col h3,.f-news h3,.f-news p,.in input{font-size:14px}
+  .f-col a{margin-bottom:12px}
+  .f-legal{flex-wrap:wrap;gap:10px 20px;padding:18px 20px;font-size:11px;justify-content:flex-start}
+}
