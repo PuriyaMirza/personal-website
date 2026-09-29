@@ -23,6 +23,8 @@ h1,h2{font-family:var(--display);font-weight:300;text-transform:uppercase;line-h
 .cl-a{background-image:url(img/barcelona.jpg)}
 .cl-b{background-image:url(img/lake.jpg)}
 
+.credit{font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;font-weight:300;position:absolute;z-index:3;white-space:nowrap}
+
 /* HERO */
 .hero{position:relative;height:max(560px,55.3vw);overflow:hidden}
 .hero .ph,.hero .overlay{inset:0}
@@ -134,4 +136,23 @@ footer{background:var(--charcoal);color:#fff}
   .f-col a,.f-col h3,.f-news h3,.f-news p,.in input{font-size:14px}
   .f-col a{margin-bottom:12px}
   .f-legal{flex-wrap:wrap;gap:10px 20px;padding:18px 20px;font-size:11px;justify-content:flex-start}
+}
+
+/* photo credits */
+.c-hero{left:1.9vw;bottom:1.3vw}
+.c-s1{left:7.7%;top:72.9%}
+.c-s2{right:7.7%;top:94.2%}
+.c-sel{left:1.9vw;top:89.2%}
+.selected .c-sel{color:#000}
+.card .c-card{position:static;display:block;color:#000;margin-top:.5vw}
+.c-cl1{left:4.5vw;bottom:1.3vw}
+.c-cl2{right:1.9%;bottom:1.3vw}
+@media (max-width:760px){
+  .c-hero{left:20px;bottom:14px}
+  .season .credit{position:relative!important;left:auto!important;right:auto!important;top:auto!important;margin-top:-14px}
+  .c-s1{order:2}.c-s2{order:3}
+  .c-sel{position:relative;left:auto;top:auto;display:block;margin:-20px 0 22px}
+  .card .c-card{margin-top:4px}
+  .c-cl1{left:20px;bottom:auto;top:calc(50% - 22px)}
+  .c-cl2{right:20px;bottom:auto;top:calc(100% - 22px)}
 }
