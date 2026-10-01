@@ -139,6 +139,7 @@ footer{background:var(--charcoal);color:#fff}
 }
 
 /* photo credits */
+.credit a{color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
 .c-hero{left:1.9vw;bottom:1.3vw}
 .c-s1{left:7.7%;top:72.9%}
 .c-s2{right:7.7%;top:94.2%}
