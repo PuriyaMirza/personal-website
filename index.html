@@ -1,20 +1,335 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puriya Mirza</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puriya Mirza</title>
+<meta name="description" content="Puriya Mirza, product manager in New York City. A working log of small tools built on the side.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;1,300&family=Jost:wght@300;400&display=swap">
+<style>
+/* Layout: dark almanac — a thin month spine on a 12-column field of hairlines; projects hang off their month at varied sizes. Single dark look by design (matches Figma option G). */
+:root {
+  --ink: #191a18;        /* page ground */
+  --paper: #f6f3ee;      /* primary text, line color */
+  --stone: #a39b8c;      /* secondary text */
+  --brass: #a8845a;      /* month markers, small labels */
+  --well: #37342e;       /* photo placeholder */
+  --line-a: 0.04;        /* resting line opacity */
+  --display: "Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --cols: 12;
+  --spine: 1;
+  --lines: 18;          /* background lines: 1.5x the layout columns */
+  --spine-f: 0.11111;   /* spine sits on line 2 of 18 */
+  color-scheme: dark;
+}
+@media (max-width: 999px) { :root { --cols: 6; --spine: 0; --lines: 9; --spine-f: 0; } }
+@media (max-width: 599px) { :root { --cols: 4; --lines: 6; } }
+
+html { background: var(--ink); }
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--body);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.frame { max-width: 1360px; margin-inline: auto; position: relative; z-index: 1; }
+
+/* Background column lines */
+.lines { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246, 243, 238, var(--line-a)); }
+.line i {
+  position: absolute; left: 0; width: 1px; height: 70vh; min-height: 420px; top: 0;
+  opacity: 0; will-change: opacity, transform;
+  background: linear-gradient(to bottom,
+    rgba(246,243,238,0) 0%,
+    rgba(246,243,238,calc(var(--hi) * 0.06)) 14%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 28%,
+    rgba(246,243,238,calc(var(--hi) * 0.72)) 40%,
+    rgba(246,243,238,var(--hi)) 50%,
+    rgba(246,243,238,calc(var(--hi) * 0.72)) 60%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 72%,
+    rgba(246,243,238,calc(var(--hi) * 0.06)) 86%,
+    rgba(246,243,238,0) 100%);
+}
+
+/* Type */
+.cap { font-family: var(--body); font-weight: 400; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
+
+/* Header */
+.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding-block: 34px 26px; border-bottom: 1px solid rgba(246,243,238,0.15); }
+.logo { font-family: var(--display); font-weight: 300; font-size: 28px; line-height: 1; text-decoration: none; }
+.tag { color: var(--stone); }
+.nav { justify-self: end; display: flex; gap: 32px; }
+.nav a { text-decoration: none; }
+.nav a:hover { color: var(--brass); }
+@media (max-width: 599px) { .top { grid-template-columns: 1fr auto; } .tag { display: none; } .nav { gap: 20px; } }
+
+/* Intro */
+.intro { display: grid; grid-template-columns: repeat(var(--cols), 1fr); padding-block: 64px 120px; gap: 24px 0; }
+.intro h1 { grid-column: 1 / 9; margin: 0; font-family: var(--display); font-weight: 300; font-size: clamp(52px, 7.2vw, 104px); line-height: 0.95; letter-spacing: -0.01em; text-wrap: balance; }
+.intro .note { grid-column: 10 / 13; align-self: start; padding-top: 18px; max-width: 34ch; }
+.intro .note p { margin: 8px 0 0; color: var(--stone); }
+.hello { color: var(--brass); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+@media (max-width: 999px) { .intro { padding-block: 48px 72px; } .intro h1, .intro .note { grid-column: 1 / -1; } .intro .note { padding-top: 0; } }
+
+/* Timeline */
+.tl { position: relative; padding-bottom: 80px; }
+.tl::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246,243,238,0.22);
+  left: calc(100% * var(--spine-f)); }
+.month { position: relative; display: grid; grid-template-columns: repeat(var(--cols), 1fr); padding-top: 40px; }
+.month + .month { margin-top: 120px; }
+.mnum { position: absolute; top: 72px; left: calc(100% * var(--spine-f) - 108px); width: 92px; text-align: right; color: var(--brass); font-variant-numeric: tabular-nums; }
+.dot { position: absolute; top: 76px; left: calc(100% * var(--spine-f) - 5px); width: 11px; height: 11px; border-radius: 50%; background: var(--brass); }
+.ghost { grid-column: 3 / 12; margin: 0; font-family: var(--display); font-style: italic; font-weight: 300; font-size: clamp(76px, 12.5vw, 180px); line-height: 1; color: var(--paper); opacity: 0.11; pointer-events: none; user-select: none; }
+.month.later .ghost { opacity: 0.05; }
+
+.entry { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--cols), 1fr); align-items: start; column-gap: 0; row-gap: 28px; margin-top: 56px; }
+.ph { margin: 0; background: var(--well); overflow: hidden; max-width: 100%; }
+.ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.text { display: grid; gap: 12px; justify-items: start; padding-right: 24px; min-width: 0; }
+.chip { display: inline-block; padding: 5px 12px; border: 1px solid rgba(246,243,238,0.45); border-radius: 999px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 400; line-height: 1.2; }
+.text h2 { margin: 8px 0 0; font-family: var(--display); font-weight: 300; font-size: clamp(34px, 3.4vw, 48px); line-height: 1; text-wrap: balance; }
+.text p { margin: 0; color: var(--stone); font-size: 15px; max-width: 38ch; }
+.links { display: flex; gap: 14px; align-items: baseline; font-weight: 400; font-size: 13px; letter-spacing: 0.04em; }
+.links a { text-underline-offset: 3px; }
+.links a:hover { color: var(--brass); }
+.links span { color: var(--stone); }
+
+/* Wide placements (12 columns) */
+@media (min-width: 1000px) {
+  .weather .ph { grid-column: 8 / 13; grid-row: 1; aspect-ratio: 600 / 400; margin-top: -150px; }
+  .weather .text { grid-column: 3 / 8; grid-row: 1; padding-top: 40px; }
+  .amtrak .ph { grid-column: 3 / 6; grid-row: 1; aspect-ratio: 340 / 440; margin-top: 40px; }
+  .amtrak .text { grid-column: 7 / 11; grid-row: 1; align-self: center; padding-top: 80px; }
+  .landing .ph { grid-column: 9 / 13; grid-row: 1; aspect-ratio: 360 / 520; margin-top: 40px; }
+  .landing .text { padding-top: 120px !important; }
+  .landing .text { grid-column: 3 / 7; grid-row: 1; padding-top: 40px; }
+  .bird .ph.main { grid-column: 3 / 7; grid-row: 1 / span 2; aspect-ratio: 1; }
+  .bird .text { grid-column: 8 / 12; grid-row: 1; padding-top: 20px; padding-left: 0; }
+  .bird .note-ph { grid-column: 8 / 10; grid-row: 2; align-self: end; }
+  .next { grid-column: 3 / 6; }
+}
+/* Narrow: stacked to the right of the spine */
+@media (max-width: 999px) {
+  .ghost { grid-column: 1 / -1; padding-left: 28px; }
+  .mnum { position: static; grid-column: 1 / -1; order: -1; text-align: left; width: auto; padding-left: 28px; margin-bottom: 4px; }
+  .dot { top: 46px; }
+  .entry { margin-top: 32px; padding-left: 28px; row-gap: 20px; }
+  .entry + .entry { margin-top: 72px; }
+  .entry > * { grid-column: 1 / -1; }
+  .weather .ph { aspect-ratio: 4 / 3; }
+  .amtrak .ph { aspect-ratio: 3 / 4; max-width: 420px; }
+  .landing .ph { aspect-ratio: 3 / 4; max-width: 420px; }
+  .bird .ph.main { aspect-ratio: 1; }
+  .bird .note-ph { max-width: 260px; }
+  .next { grid-column: 1 / -1; margin-left: 28px; }
+  .month + .month { margin-top: 72px; }
+}
+.ph.sq img { object-position: 58% 50%; }
+.note-ph figure { margin: 0; }
+.note-ph .ph { aspect-ratio: 240 / 160; }
+.note-ph .ph img { filter: grayscale(1) contrast(1.05); }
+.note-ph figcaption { margin-top: 10px; color: var(--stone); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+.next { margin-top: 40px; height: 150px; display: grid; place-items: center; border: 1px dashed rgba(246,243,238,0.35); color: var(--stone); }
+
+/* Footer */
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; padding-block: 28px 48px; border-top: 1px solid rgba(246,243,238,0.15); }
+.foot .copy { color: var(--stone); }
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.soon { color: var(--stone); }
+</style>
 </head>
 <body>
-  <main>
-    <header>
-      <h1>Puriya Mirza</h1>
-      <p class="subtitle">Product Manager, New York City</p>
-    </header>
+
+<div class="lines" id="lines" aria-hidden="true"></div>
+
+<div class="frame">
+  <header class="top">
+    <a class="logo" href="/" id="top">Puriya Mirza</a>
+    <span class="cap tag">A working log</span>
+    <nav class="nav cap" aria-label="Main"><a href="#work">Projects</a><a href="#contact">Contact</a></nav>
+  </header>
+
+  <section class="intro">
+    <h1>What I’ve been making lately.</h1>
+    <div class="note">
+      <span class="hello">(Hello)</span>
+      <p>Product manager in New York City. These are the small tools I’ve built on the side, in the order I started them.</p>
+    </div>
+  </section>
+
+  <main class="tl" id="work">
+    <section class="month" aria-labelledby="m-aug">
+      <span class="dot"></span><span class="cap mnum">08 · 26</span>
+      <p class="ghost" id="m-aug">August</p>
+      <article class="entry weather">
+        <figure class="ph"><img src="img/coast.jpg" alt="Coastline with green cliffs and turquoise water under a cloudy sky"></figure>
+        <div class="text">
+          <h2>Weather Dashboard</h2>
+          <p>A customizable weather dashboard: pick the readings you want, arrange them, and check any location with live Open-Meteo data.</p>
+          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://weather-dashboard-one-neon.vercel.app" target="_blank" rel="noopener">Live site</a></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="month" aria-labelledby="m-sep">
+      <span class="dot"></span><span class="cap mnum">09 · 26</span>
+      <p class="ghost" id="m-sep">September</p>
+      <article class="entry amtrak">
+        <figure class="ph"><img src="img/scooter-road.jpg" alt="View from a scooter's handlebars down a winding road through green hills"></figure>
+        <div class="text">
+          <h2>Amtrak Explorer</h2>
+          <p>Find affordable Amtrak trips out of Penn Station by asking in plain English.</p>
+          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://amtrak-explorer.vercel.app" target="_blank" rel="noopener">Live site</a></div>
+        </div>
+      </article>
+      <article class="entry landing">
+        <figure class="ph"><img src="img/window-city.jpg" alt="City rooftops and a temple spire seen through a window"></figure>
+        <div class="text">
+          <h2>Landing Checklist</h2>
+          <p>A stage-by-stage plan from Heathrow landing to the curb, built from your flight number and saved for offline use.</p>
+          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://landing-checklist.vercel.app" target="_blank" rel="noopener">Live site</a></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="month" aria-labelledby="m-oct">
+      <span class="dot"></span><span class="cap mnum">10 · 26</span>
+      <p class="ghost" id="m-oct">October</p>
+      <article class="entry bird">
+        <figure class="ph main sq"><img src="img/sparrow.jpg" alt="House sparrow perched on a stone ledge"></figure>
+        <div class="text">
+          <h2>Bird Tracker</h2>
+          <p>A field companion for birding Central Park: local species, where to find them, and how to tell look-alikes apart.</p>
+          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://nyc-bird-tracker.vercel.app" target="_blank" rel="noopener">Live site</a></div>
+        </div>
+        <div class="note-ph">
+          <figure>
+            <div class="ph"><img src="img/woodpecker.jpg" alt="Downy woodpecker on a tree trunk, in black and white"></div>
+            <figcaption>Field note: downy woodpecker</figcaption>
+          </figure>
+        </div>
+      </article>
+    </section>
+
+    <section class="month later" aria-labelledby="m-nov">
+      <span class="dot"></span><span class="cap mnum">11 · 26</span>
+      <p class="ghost" id="m-nov">November</p>
+      <div class="next cap">Next, soon</div>
+    </section>
   </main>
+
+  <footer class="foot cap" id="contact">
+    <span><a href="mailto:contact@puriyamirza.com">contact@puriyamirza.com</a> · <a href="https://github.com/PuriyaMirza" target="_blank" rel="noopener">GitHub</a></span>
+    <span class="copy">© 2026 Puriya Mirza</span>
+  </footer>
+</div>
+
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const layer = document.getElementById('lines');
+  const frame = document.querySelector('.frame');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const BASE = 0.07, R = 10, DUR = 1400, RISE = 0.38, COOLDOWN = 260;
+  let boost = 4, lines = [], raf = 0, py = window.innerHeight / 2, freshMouse = true;
+
+  const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);   // S-curve
+  const setHi = () => root.style.setProperty('--hi', '0.28');   // pulse peak held at its previous strength
+
+  function build() {
+    const cols = parseInt(getComputedStyle(root).getPropertyValue('--lines'), 10) || 18;
+    const r = frame.getBoundingClientRect();
+    layer.innerHTML = '';
+    lines = [];
+    for (let c = 0; c <= cols; c++) {
+      const x = Math.round(r.left + (r.width / cols) * c);
+      const el = document.createElement('div');
+      el.className = 'line'; el.style.left = x + 'px';
+      const hi = document.createElement('i');
+      el.appendChild(hi); layer.appendChild(el);
+      lines.push({ x, hi, start: -1e9, side: 0, y: py });
+    }
+  }
+
+  // At most one line fires per event: the candidate nearest the pointer.
+  // A fresh touch (or the cursor re-entering the page) only counts proximity, never a "crossing".
+  function move(x, y, fresh) {
+    py = y;
+    if (reduce.matches) return;
+    const now = performance.now();
+    let best = null, bestD = Infinity;
+    for (const L of lines) {
+      const d = x - L.x, ad = Math.abs(d), side = Math.sign(d) || 1;
+      const crossed = !fresh && L.side !== 0 && side !== L.side;
+      if ((ad <= R || crossed) && now - L.start > COOLDOWN && ad < bestD) { best = L; bestD = ad; }
+      L.side = side;
+      if (now - L.start < DUR) L.y += (y - L.y) * 0.25;   // band follows the pointer while it pulses
+    }
+    if (best) { best.start = now; best.y = y; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  function tick(now) {
+    let live = false;
+    const h = lines.length ? lines[0].hi.offsetHeight : 0;
+    for (const L of lines) {
+      const t = (now - L.start) / DUR;
+      let v = 0;
+      if (t >= 0 && t < 1) { v = t < RISE ? smooth(t / RISE) : 1 - smooth((t - RISE) / (1 - RISE)); live = true; }
+      L.hi.style.opacity = v.toFixed(3);
+      if (v > 0) L.hi.style.transform = `translateY(${Math.round(L.y - h / 2)}px)`;
+    }
+    raf = live ? requestAnimationFrame(tick) : 0;
+  }
+
+  window.addEventListener('resize', build);
+
+
+
+  setHi();
+
+  // Ambient mode: one line per second, shuffled so every line gets a turn before any repeats.
+  let bag = [], last = -1;
+  function nextIndex() {
+    if (!bag.length) {
+      bag = lines.map((_, i) => i);
+      for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+      if (bag[bag.length - 1] === last && bag.length > 1) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+    }
+    return bag.pop();
+  }
+  function beat() {
+    if (reduce.matches || document.hidden || !lines.length) return;
+    const i = nextIndex(); if (i == null || !lines[i]) { bag = []; return; }
+    last = i;
+    const L = lines[i];
+    L.start = performance.now();
+    L.y = window.innerHeight * (0.15 + Math.random() * 0.7);
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  window.addEventListener('resize', () => { bag = []; });
+  setInterval(beat, 1000);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(build);
+  build();
+})();
+</script>
 </body>
 </html>
