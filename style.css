@@ -1,0 +1,72 @@
+:root {
+  --color-bg: #FAF6EC;
+  --color-text: #1A1814;
+  --color-body: #3A342A;
+  --color-muted: #6B6252;
+  --color-rule: #DED5C0;
+
+  --font-body: 'EB Garamond', Garamond, 'Times New Roman', serif;
+
+  --size-h1: 50px;
+  --size-h2: 15px;
+  --size-subtitle: 20px;
+  --size-body: 17px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 600;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 26px;
+  --space-lg: 48px;
+
+  --measure: 42rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: var(--space-lg) 24px;
+  background: var(--color-bg);
+  color: var(--color-body);
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  line-height: 1.7;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: var(--size-h1);
+  font-weight: var(--weight-regular);
+  line-height: 1.05;
+  color: var(--color-text);
+  margin: 0 0 var(--space-xs);
+}
+
+.subtitle {
+  font-size: var(--size-subtitle);
+  font-weight: var(--weight-regular);
+  color: var(--color-muted);
+  margin: 0 0 var(--space-md);
+}
+
+h2 {
+  font-size: var(--size-h2);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  margin: var(--space-lg) 0 var(--space-sm);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-rule);
+}
+
+p {
+  margin: 0 0 1rem;
+}
