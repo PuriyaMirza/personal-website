@@ -1,20 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puriya Mirza</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puriya Mirza</title>
+<meta name="description" content="Puriya Mirza, Product Manager, New York City.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300&family=Jost:wght@400&display=swap">
+<style>
+/* Almanac styling: dark ground, field of hairline columns, one line pulses each second. */
+:root {
+  --ink: #191a18;
+  --paper: #f6f3ee;
+  --stone: #a39b8c;
+  --line-a: 0.04;   /* resting line opacity */
+  --hi: 0.28;       /* pulse peak */
+  --lines: 18;
+  --display: "Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+@media (max-width: 999px) { :root { --lines: 9; } }
+@media (max-width: 599px) { :root { --lines: 6; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.frame {
+  position: relative; z-index: 1;
+  max-width: 1360px; min-height: 100%; margin-inline: auto;
+  display: flex; align-items: flex-end;
+  padding-block: max(40px, env(safe-area-inset-top, 0px)) calc(14vh + env(safe-area-inset-bottom, 0px));
+}
+h1 {
+  margin: 0;
+  font-family: var(--display); font-weight: 300;
+  font-size: clamp(72px, 13.5vw, 200px);
+  line-height: 0.86; letter-spacing: -0.015em;
+}
+.title {
+  margin: 28px 0 0;
+  font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--stone);
+}
+
+/* Background column lines */
+.lines { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246, 243, 238, var(--line-a)); }
+.line i {
+  position: absolute; left: 0; top: 0; width: 1px; height: 70vh; min-height: 420px;
+  opacity: 0; will-change: opacity, transform;
+  background: linear-gradient(to bottom,
+    rgba(246,243,238,0) 0%,
+    rgba(246,243,238,calc(var(--hi) * 0.06)) 14%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 28%,
+    rgba(246,243,238,calc(var(--hi) * 0.72)) 40%,
+    rgba(246,243,238,var(--hi)) 50%,
+    rgba(246,243,238,calc(var(--hi) * 0.72)) 60%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 72%,
+    rgba(246,243,238,calc(var(--hi) * 0.06)) 86%,
+    rgba(246,243,238,0) 100%);
+}
+</style>
 </head>
 <body>
-  <main>
-    <header>
-      <h1>Puriya Mirza</h1>
-      <p class="subtitle">Product Manager, New York City</p>
-    </header>
-  </main>
+<div class="lines" id="lines" aria-hidden="true"></div>
+<main class="frame">
+  <header>
+    <h1>Puriya Mirza</h1>
+    <p class="title">Product Manager, New York City</p>
+  </header>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const layer = document.getElementById('lines');
+  const frame = document.querySelector('.frame');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const DUR = 1400, RISE = 0.38;
+  let lines = [], raf = 0, bag = [], last = -1;
+
+  const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);   // S-curve
+
+  function build() {
+    const n = parseInt(getComputedStyle(root).getPropertyValue('--lines'), 10) || 18;
+    const r = frame.getBoundingClientRect();
+    layer.innerHTML = ''; lines = []; bag = [];
+    for (let c = 0; c <= n; c++) {
+      const x = Math.round(r.left + (r.width / n) * c);
+      const el = document.createElement('div');
+      el.className = 'line'; el.style.left = x + 'px';
+      const hi = document.createElement('i');
+      el.appendChild(hi); layer.appendChild(el);
+      lines.push({ hi, start: -1e9, y: 0 });
+    }
+  }
+
+  function tick(now) {
+    let live = false;
+    const h = lines.length ? lines[0].hi.offsetHeight : 0;
+    for (const L of lines) {
+      const t = (now - L.start) / DUR;
+      let v = 0;
+      if (t >= 0 && t < 1) { v = t < RISE ? smooth(t / RISE) : 1 - smooth((t - RISE) / (1 - RISE)); live = true; }
+      L.hi.style.opacity = v.toFixed(3);
+      if (v > 0) L.hi.style.transform = `translateY(${Math.round(L.y - h / 2)}px)`;
+    }
+    raf = live ? requestAnimationFrame(tick) : 0;
+  }
+
+  // One line per second, shuffled so every line gets a turn before any repeats.
+  function nextIndex() {
+    if (!bag.length) {
+      bag = lines.map((_, i) => i);
+      for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+      if (bag.length > 1 && bag[bag.length - 1] === last) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+    }
+    return bag.pop();
+  }
+  function beat() {
+    if (reduce.matches || document.hidden || !lines.length) return;
+    const i = nextIndex(); if (i == null || !lines[i]) return;
+    last = i;
+    const L = lines[i];
+    L.start = performance.now();
+    L.y = window.innerHeight * (0.15 + Math.random() * 0.7);
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('resize', build);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(build);
+  build();
+  setInterval(beat, 1000);
+})();
+</script>
 </body>
 </html>
