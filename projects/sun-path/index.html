@@ -276,8 +276,10 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
         float jit = (vnoise(bp * 2.4 + fj * 13.1 + u_bph) - 0.5) * 5.0 * u_break;
         // Uneven spacing: a broad, strong phase field squeezes crests together in some places
         // and spreads them apart in others.
-        float gapv = (vnoise(bp * 0.9 + fj * 5.3 - u_bph * 0.6) - 0.5) * 14.0 * u_break;
-        float c = cos(u_wave[j].x * bp.x + u_wave[j].y * bp.y - u_wave[j].z + jit + gapv) * fd;
+        float gapv = (vnoise(bp * 0.6 + fj * 5.3 - u_bph * 0.6) - 0.5) * 30.0 * u_break;
+        // Open gaps: each layer fades out in drifting patches, leaving wider calm spaces between crests.
+        float keep = mix(1.0, smoothstep(0.25, 0.6, vnoise(bp * 1.3 + fj * 9.1 + u_bph * 0.7)), 0.85 * u_break);
+        float c = cos(u_wave[j].x * bp.x + u_wave[j].y * bp.y - u_wave[j].z + jit + gapv) * fd * keep;
         gx += u_amp[j].x * c;
         gz += u_amp[j].y * c;
       }
