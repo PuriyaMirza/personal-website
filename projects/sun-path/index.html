@@ -100,7 +100,9 @@ canvas {
     attribute vec2 a_pos;   // CSS px
     attribute vec4 a_data;  // world X, world Z, distance (0 near, 1 far), glitter weight
     attribute vec2 a_misc;  // dot size, random seed
+    attribute float a_hull; // distance to the bow's hull in px, or -1 when far from it
     uniform vec2 u_res;
+    uniform float u_flow;   // how far the water has streamed past the bow
     uniform float u_dpr;
     uniform float u_frame;
     uniform float u_scroll; // page scroll, CSS px
@@ -114,6 +116,24 @@ canvas {
     uniform vec3 u_foam;
     varying vec4 v_col;
     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    float vnoise(vec2 p) {
+      vec2 i = floor(p), q = fract(p);
+      vec2 s = q * q * (3.0 - 2.0 * q);
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), s.x),
+                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), s.x), s.y);
+    }
+    // Foam where the water breaks on the bow: a churning white band hugging the hull,
+    // plus a broken second crest further out, both streaming down and away from the tip.
+    float bowFoam(float d) {
+      if (d < 0.0) return 0.0;
+      float side = sign(a_pos.x - u_res.x * 0.5);
+      vec2 p = a_pos * 0.04 + vec2(-side * u_flow * 0.5, -u_flow);
+      float n = vnoise(p) * 0.6 + vnoise(p * 2.3 + 4.1) * 0.4;
+      float hug = exp(-d / 40.0);
+      float crest = exp(-pow((d - 78.0) / 22.0, 2.0)) * 0.75;
+      float spray = exp(-d / 120.0) * 0.25;
+      return clamp(hug * (0.55 + 0.7 * n) + (crest + spray) * smoothstep(0.45, 0.8, n), 0.0, 1.0);
+    }
     void main() {
       float x = a_data.x, z = a_data.y, f = a_data.z, glt = a_data.w;
       float gx = 0.0, gz = 0.0;
@@ -132,14 +152,16 @@ canvas {
       float r1 = hash(vec2(a_misc.y, u_frame));
       float r2 = hash(vec2(a_misc.y + 7.13, u_frame));
       float thr = u_tune.x + 0.15 - 0.7 * f - glt + r1 * 0.1;
+      float foam = bowFoam(a_hull);
       float size = a_misc.x;
       vec3 col = u_on;
       float a;
-      if (v > thr) { col = u_foam; a = 1.0; size *= 1.25; }
-      else if (v > thr - (0.15 + 0.25 * f)) { a = 0.88; }
+      if (foam > 0.5 + (r1 - 0.5) * 0.35) { col = u_foam; a = 1.0; size *= 1.35; }
+      else if (v > thr) { col = u_foam; a = 1.0; size *= 1.25; }
+      else if (v > thr - (0.15 + 0.25 * f) || foam > 0.3) { a = 0.88; }
       else {
         float base = 0.24 + 0.42 * pow(f, 1.2);
-        float b = clamp(base + 0.12 * glt + u_tune.y * v * (1.0 - 0.4 * f) + (r2 - 0.5) * 0.08, 0.0, 1.0);
+        float b = clamp(base + 0.12 * glt + 0.6 * foam + u_tune.y * v * (1.0 - 0.4 * f) + (r2 - 0.5) * 0.08, 0.0, 1.0);
         a = 0.08 + 0.66 * pow(b, 1.15);
       }
       gl_Position = vec4(a_pos.x / u_res.x * 2.0 - 1.0, 1.0 - (a_pos.y - u_scroll) / u_res.y * 2.0, 0.0, 1.0);
@@ -183,9 +205,9 @@ canvas {
       if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
       gl.useProgram(pr);
       u = {};
-      ['u_res', 'u_dpr', 'u_frame', 'u_scroll', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
+      ['u_res', 'u_dpr', 'u_frame', 'u_scroll', 'u_flow', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
         .forEach(name => { u[name] = gl.getUniformLocation(pr, name); });
-      attrs = ['a_pos', 'a_data', 'a_misc'].map(name => gl.getAttribLocation(pr, name));
+      attrs = ['a_pos', 'a_data', 'a_misc', 'a_hull'].map(name => gl.getAttribLocation(pr, name));
       buf = gl.createBuffer();
       const amp = new Float32Array(12);
       wv.forEach((v, i) => { amp[i * 2] = v.ax; amp[i * 2 + 1] = v.az; });
@@ -224,6 +246,15 @@ canvas {
     // px per world unit: follows screen height, capped on narrow (portrait) screens so ripples don't turn into bands
     const xUnit = Math.min(REF_HALF_W * span / REF_SPAN, 1.6 * W);
     const glt = P.glitter;
+    // The bottom of the page is a ship's bow seen from above: a point at the center, hull lines
+    // sweeping back and out past the screen edges. No water is drawn inside it.
+    const bowH = Math.min(0.32 * H, 0.5 * W), bowHalf = W * 0.62, BOW_P = 1.1;
+    const hullAt = px => {
+      const q = Math.min(1, Math.abs(px - W / 2) / bowHalf);
+      const yb = oceanH - bowH * (1 - Math.pow(q, BOW_P));
+      const slope = bowH * BOW_P * Math.pow(q, BOW_P - 1) / bowHalf;
+      return [yb, Math.sqrt(1 + slope * slope)];   // hull height, and a factor to turn vertical gap into true distance
+    };
     const out = [];
     rowY = []; rowStart = [];
     let y = 2, row = 0, i = 0;
@@ -240,11 +271,20 @@ canvas {
       const cols = Math.floor(W / gap);
       const off = (W - (cols - 1) * gap) / 2 + (row % 2 ? gap / 2 : 0) - gap / 4;
       rowY.push(y); rowStart.push(i);
-      for (let c = 0; c < cols; c++, i++) {
+      const nearBow = y > oceanH - bowH - 300;
+      for (let c = 0; c < cols; c++) {
         const px = off + c * gap;
+        let hd = -1;
+        if (nearBow) {
+          const [yb, k] = hullAt(px);
+          if (y > yb) continue;                 // inside the ship
+          const dist = (yb - y) / k;
+          if (dist < 300) hd = dist;
+        }
         const d = (px - glt.x * W) / wdt;
         out.push(px, y, (px - W / 2) / xUnit * xs * ZOOM, z * ZOOM, f,
-                 glt.boost * fade * Math.exp(-d * d), dot, (i % 4093) + 0.5);
+                 glt.boost * fade * Math.exp(-d * d), dot, (i % 4093) + 0.5, hd);
+        i++;
       }
       y += gap * 0.8; row++;
     }
@@ -252,10 +292,11 @@ canvas {
     n = i;
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(out), gl.STATIC_DRAW);
-    const [aPos, aData, aMisc] = attrs, STRIDE = 32;
+    const [aPos, aData, aMisc, aHull] = attrs, STRIDE = 36;
     gl.enableVertexAttribArray(aPos);  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, STRIDE, 0);
     gl.enableVertexAttribArray(aData); gl.vertexAttribPointer(aData, 4, gl.FLOAT, false, STRIDE, 8);
     gl.enableVertexAttribArray(aMisc); gl.vertexAttribPointer(aMisc, 2, gl.FLOAT, false, STRIDE, 24);
+    gl.enableVertexAttribArray(aHull); gl.vertexAttribPointer(aHull, 1, gl.FLOAT, false, STRIDE, 32);
   }
 
   function draw() {
@@ -270,6 +311,7 @@ canvas {
     gl.uniform2f(u.u_res, W, H);
     gl.uniform1f(u.u_dpr, dpr);
     gl.uniform1f(u.u_frame, Math.floor(t * 24) % 251);   // flicker stays at 24 Hz at any frame rate
+    gl.uniform1f(u.u_flow, (t * 2.2) % 4096);            // foam streams past at ~55 px/s
     lastScroll = window.scrollY;
     gl.uniform1f(u.u_scroll, lastScroll);
     gl.clearColor(0, 0, 0, 0);
