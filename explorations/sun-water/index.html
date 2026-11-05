@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sun Path · Puriya Mirza</title>
+<meta name="description" content="Sun path: wind ripples on open water, drawn in dots with WebGL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400&family=Jost:wght@400&display=swap">
+<style>
+/* WebGL water study with its case study. Homepage palette and fonts; cards are 80% ink over the water. */
+:root {
+  --water: #0d1013;
+  --ink-80: rgba(25, 26, 24, 0.8);   /* homepage --ink at 80% */
+  --paper: #f6f3ee;
+  --stone: #a39b8c;
+  --rule: rgba(163, 155, 140, 0.28);
+  --display: "Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--water);
+  color: var(--paper);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+/* The scrollable length of water. The canvas stays fixed and redraws at the scroll position;
+   the page ends at a ship's hull, drawn by the script, with the footer on its deck. */
+.ocean { position: relative; min-height: 300vh; }
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(max(96px, 12vh) + 70vh);   /* leave open water and the hull below the cards */
+}
+/* Title block ends where the cards begin: ~150px above the bottom of the first screen, then 10% lower */
+.hero {
+  min-height: calc(110svh - 150px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 28px;
+  text-shadow: 0 0 14px var(--water);
+}
+h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(48px, 8vw, 104px);
+  line-height: 0.88;
+  letter-spacing: -0.015em;
+}
+.byline, .deck {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+.byline a, .deck a { color: inherit; text-underline-offset: 3px; }
+.byline a:hover, .deck a:hover, a:focus-visible { color: var(--paper); }
+a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+.card {
+  min-width: 0;
+  background: var(--ink-80);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 26px 26px 28px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.card-wide { grid-column: 1 / -1; }
+@media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+.card strong { font-weight: 400; color: var(--paper); }
+.eyebrow { margin: 0; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--stone); }
+.card h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.card p, .card li { font-size: 15px; line-height: 1.6; color: rgba(246, 243, 238, 0.86); }
+.card p { margin: 0; max-width: 60ch; }
+.card ol, .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.card ol { counter-reset: step; }
+.card ol li { counter-increment: step; display: grid; grid-template-columns: 26px 1fr; }
+.card ol li::before { content: counter(step); font-family: var(--display); font-size: 18px; color: var(--stone); line-height: 1.4; }
+.card ul li { padding-left: 14px; border-left: 1px solid var(--rule); }
+.figure {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  padding-top: 14px; border-top: 1px solid var(--rule);
+  font-size: 12px; letter-spacing: 0.06em; color: var(--stone);
+  font-variant-numeric: tabular-nums;
+}
+.figure b { display: block; font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: 0; color: var(--paper); }
+/* Footer sits on the ship's deck, below the hull line */
+[hidden] { display: none !important; }
+.tuner {
+  position: fixed; z-index: 5;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 6px;
+  padding: 10px 14px; border-radius: 16px;
+  background: var(--ink-80); border: 1px solid var(--rule);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--stone);
+}
+.tune-row { display: grid; grid-template-columns: 8.5em 1fr 2.5em; align-items: center; gap: 10px; }
+.tuner input { width: min(40vw, 180px); accent-color: var(--paper); }
+.tuner output { min-width: 2.5em; text-align: right; color: var(--paper); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.deck {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: max(96px, 12vh);
+  display: flex; align-items: center; justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+</style>
+</head>
+<body>
+<canvas id="water" aria-label="Wind ripples on open water, with a column of sun glitter, drawn in tiny dots"></canvas>
+<div class="ocean" id="ocean">
+  <main class="page">
+    <header class="hero">
+      <h1>Sun path</h1>
+      <p class="byline" id="note">A WebGL study · <a href="/">Puriya Mirza</a></p>
+    </header>
+    <section class="cards" aria-label="Case study">
+      <article class="card card-wide">
+        <p class="eyebrow">The goal</p>
+        <h2>A shimmering ocean made of dots</h2>
+        <p>I wanted an ambient, animated background for my site: tiny flickering dots that move like waves. It had to feel organic and cost almost no processing power.</p>
+        <p>The result is the page you're on. A full-page WebGL water study that runs at 24 fps with almost no CPU cost, shows a still frame for people who prefer reduced motion, and pauses when the tab is hidden.</p>
+        <div class="figure">
+          <span><b>~18,600</b>dots per screen</span>
+          <span><b>24</b>frames per second</span>
+          <span><b>~8 ms → &lt;0.1 ms</b>CPU per frame, canvas to WebGL</span>
+        </div>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Process</p>
+        <h2>Six steps from sketch to sea</h2>
+        <ol>
+          <li><span><strong>Three ways to build it.</strong> I compared a CSS gradient sweep, a CSS grid of fading dots, and a canvas drawn with sine-wave math. The CSS options were nearly free to run but too rigid. Only the canvas could truly flicker.</span></li>
+          <li><span><strong>Sea states.</strong> I tuned the canvas into calm, swell and choppy. Choppy came closest, but it still read as a diagram of waves.</span></li>
+          <li><span><strong>A real reference.</strong> I filmed open water and studied the frames. An angled view, dark near water, silvery far water, and glints where ripples tilt toward the light made it read as water, so I rebuilt the model around those.</span></li>
+          <li><span><strong>Variations.</strong> I generated six versions with swells, gust patches, wind streaks and a sun-glitter column, tuned glint density by distance from the horizon, and picked the sun path.</span></li>
+          <li><span><strong>Moving it to the GPU.</strong> I ported the winner to WebGL so every dot is calculated in parallel.</span></li>
+          <li><span><strong>Refining it on the real site.</strong> I zoomed out and ran the water down the page. The first screen looks to the horizon, the view tilts straight down as you scroll, and the page ends at the side of a ship with foam breaking along the hull.</span></li>
+        </ol>
+      </article>
+      <article class="card">
+        <p class="eyebrow">What I learned</p>
+        <h2>Shimmer comes from choppiness</h2>
+        <ul>
+          <li><strong>Real footage beats tweaking.</strong> One short clip did more than hours of adjusting numbers.</li>
+          <li><strong>More randomness wasn't more organic.</strong> A noise-warped, 12-wave version looked worse and lost its shimmer, so I reverted it.</li>
+          <li><strong>Shimmer comes from choppiness, not smoothness.</strong> At 60 fps glints glide. At 24 fps they pop on and off, and that pop is what reads as sparkle.</li>
+          <li><strong>Prototype cheap, port once.</strong> I explored in canvas, where changes were quick, and moved only the final design to the GPU.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+  <p class="deck"><a href="/">Puriya Mirza</a></p>
+</div>
+<!-- Tuning panel: hidden by default; add ?tune to the URL to show it again -->
+<div class="tuner" id="tuner" hidden>
+  <div class="tune-row">
+    <label for="brk">Line spacing</label>
+    <input type="range" id="brk" min="0" max="100" step="1" value="42">
+    <output id="brkOut" for="brk">42</output>
+  </div>
+  <div class="tune-row">
+    <label for="rand">Sparkle</label>
+    <input type="range" id="rand" min="0" max="100" step="1" value="10">
+    <output id="randOut" for="rand">10</output>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- settings ----------
+  // Frame cap. Lower = each frame jumps further, so glints pop on and off and read as shimmer.
+  // Try others with ?fps=12, ?fps=18, ?fps=30 in the address bar.
+  const fpsParam = Number(new URLSearchParams(location.search).get('fps'));
+  const FPS = fpsParam >= 6 && fpsParam <= 60 ? fpsParam : 24;
+  const COLORS = { water: '#5ab0ff', glint: '#e8f4ff' };
+  const NEAR_GAP = 6, MIN_GAP = 2.8, NEAR_DOT = 1.7, MIN_DOT = 1;   // dot spacing/size in CSS px
+  const ZOOM = 1.6;   // >1 zooms out: more, smaller ripples on screen
+  // The study was tuned on a 260px-tall stage; world scale follows screen height so it looks the same at any size.
+  const REF_SPAN = 307, REF_HALF_W = 440;
+  const BREEZE = [[0.15, 38, 0.10, 1], [-0.45, 52, 0.11, 0.75], [0.75, 30, 0.08, 0.55],
+                  [-1.0, 71, 0.12, 0.4], [0.35, 96, 0.13, 0.3]];
+  const P = {
+    // [direction rad, wavenumber, speed, amplitude], rotated and scaled for this variant
+    waves: BREEZE.map(([d, k, c, a]) => [d - 0.3, k * 1.15, c, a]),
+    gust: { k: 0.7, w: 0.25, depth: 0.5 },
+    glint: 0.95, contrast: 0.3, light: [0.3, 0.95],
+    glitter: { x: 0.62, w: 0.16, boost: 0.8 }   // sun column: x across screen (0–1), width, strength
+  };
+
+  // ---------- shaders: one GPU thread per dot ----------
+  const VS = `
+    precision highp float;
+    attribute vec2 a_pos;   // CSS px
+    attribute vec4 a_data;  // world X, world Z, distance (0 near, 1 far), glitter weight
+    attribute vec2 a_misc;  // dot size, random seed
+    attribute float a_hull; // distance to the bow's hull in px, or -1 when far from it
+    uniform vec2 u_res;
+    uniform float u_flow;   // how far the water has streamed past the bow
+    uniform float u_rand;   // shimmer randomness, 0 = original look
+    uniform float u_break;  // crest breakup, 0 = straight crests
+    uniform float u_bph;    // slow drift of the breakup pattern
+    uniform float u_dpr;
+    uniform float u_frame;
+    uniform float u_scroll; // page scroll, CSS px
+    uniform vec4 u_wave[6]; // kx, kz, phase
+    uniform vec2 u_amp[6];
+    uniform vec3 u_gust;    // k, depth, x-stretch
+    uniform vec2 u_gph;
+    uniform vec2 u_light;
+    uniform vec2 u_tune;    // glint threshold, contrast
+    uniform vec3 u_on;
+    uniform vec3 u_foam;
+    varying vec4 v_col;
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    float vnoise(vec2 p) {
+      vec2 i = floor(p), q = fract(p);
+      vec2 s = q * q * (3.0 - 2.0 * q);
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), s.x),
+                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), s.x), s.y);
+    }
+    // Foam where the water runs along the ship's side: a churning white band hugging the hull,
+    // plus a broken, rolling second crest further out. Streaks stretch along the hull and
+    // stream sideways as the ship moves.
+    float bowFoam(float d) {
+      if (d < 0.0) return 0.0;
+      vec2 p = vec2(a_pos.x * 0.022 + u_flow, a_pos.y * 0.06);
+      float n = vnoise(p) * 0.6 + vnoise(p * 2.3 + 4.1) * 0.4;
+      float hug = exp(-d / 40.0);
+      float roll = 18.0 * sin(a_pos.x * 0.012 + u_flow * 0.55);   // crest line rises and falls as it travels
+      float crest = exp(-pow((d - 78.0 - roll) / 22.0, 2.0)) * 0.75;
+      float spray = exp(-d / 120.0) * 0.25;
+      return clamp(hug * (0.55 + 0.7 * n) + (crest + spray) * smoothstep(0.45, 0.8, n), 0.0, 1.0);
+    }
+    void main() {
+      float x = a_data.x, z = a_data.y, f = a_data.z, glt = a_data.w;
+      // Uneven curvature: bend the whole ripple field with slow noise so crests curve by
+      // different amounts from place to place.
+      vec2 wp = vec2(x, z);
+      vec2 bend = vec2(vnoise(wp * 1.1 + 3.7 + u_bph), vnoise(wp * 1.1 - 6.1 - u_bph)) - 0.5;
+      const float CURVE = 0.17;   // curvature fixed at the slider's old 17 setting
+      vec2 bp = wp + bend * 0.35 * CURVE;
+      float gx = 0.0, gz = 0.0;
+      for (int j = 0; j < 6; j++) {
+        // fine ripples fade out near the horizon, where they'd be smaller than the dot spacing and alias into a grid
+        float fd = 1.0 - smoothstep(0.35, 0.85, f) * u_wave[j].w;
+        float fj = float(j);
+        // Crest breakup: each ripple layer gets its own slow, patchy phase shift, so long straight
+        // crests (which perspective turns into radiating stripes) wobble and split into segments.
+        float jit = (vnoise(bp * 2.4 + fj * 13.1 + u_bph) - 0.5) * 5.0 * CURVE;
+        // Uneven spacing (the slider): a phase field that varies only along this layer's direction
+        // of travel, so crests squeeze together or spread apart without bending.
+        float along = dot(bp, normalize(u_wave[j].xy));
+        float gapv = (vnoise(vec2(along * 0.6 - u_bph * 0.6, fj * 5.3)) - 0.5) * 30.0 * u_break;
+        // Open gaps: each layer fades out in drifting patches, leaving wider calm spaces between crests.
+        float keep = mix(1.0, smoothstep(0.25, 0.6, vnoise(bp * 1.3 + fj * 9.1 + u_bph * 0.7)), 0.85 * u_break);
+        float c = cos(u_wave[j].x * bp.x + u_wave[j].y * bp.y - u_wave[j].z + jit + gapv) * fd * keep;
+        gx += u_amp[j].x * c;
+        gz += u_amp[j].y * c;
+      }
+      float k = u_gust.x, sx = u_gust.z;
+      float g = sin(x * k * sx + z * k * 0.7 - u_gph.x) *
+                sin(x * k * 0.6 * sx - z * k * 1.3 + u_gph.y + 2.0);
+      float env = 1.0 - u_gust.y + u_gust.y * 0.5 * (1.0 + g);
+      float v = (gx * u_light.x + gz * u_light.y) * env * 2.4;
+      float r1 = hash(vec2(a_misc.y, u_frame));
+      float r2 = hash(vec2(a_misc.y + 7.13, u_frame));
+      // Shimmer randomness: a per-frame flicker on each dot, plus a fixed per-dot bias so some
+      // dots catch light more easily than others. At u_rand = 0 this matches the original look.
+      float bias = hash(vec2(a_misc.y * 1.37, 3.1)) - 0.5;
+      float thr = u_tune.x + 0.15 - 0.7 * f - glt + 0.05
+                + (r1 - 0.5) * (0.1 + 0.9 * u_rand)
+                + bias * 0.7 * u_rand;
+      float foam = bowFoam(a_hull);
+      float size = a_misc.x;
+      vec3 col = u_on;
+      float a;
+      if (foam > 0.5 + (r1 - 0.5) * 0.35) { col = u_foam; a = 1.0; size *= 1.35; }
+      else if (v > thr) { col = u_foam; a = 1.0; size *= 1.25; }
+      else if (v > thr - (0.15 + 0.25 * f) || foam > 0.3) { a = 0.88; }
+      else {
+        float base = 0.24 + 0.42 * pow(f, 1.2);
+        float b = clamp(base + 0.12 * glt + 0.6 * foam + u_tune.y * v * (1.0 - 0.4 * f) + (r2 - 0.5) * (0.08 + 0.3 * u_rand), 0.0, 1.0);
+        a = 0.08 + 0.66 * pow(b, 1.15);
+      }
+      gl_Position = vec4(a_pos.x / u_res.x * 2.0 - 1.0, 1.0 - (a_pos.y - u_scroll) / u_res.y * 2.0, 0.0, 1.0);
+      gl_PointSize = size * u_dpr;
+      v_col = vec4(col * a, a);
+    }`;
+  const FS = `
+    precision mediump float;
+    varying vec4 v_col;
+    void main() { gl_FragColor = v_col; }`;
+
+  const TAU = Math.PI * 2;
+  const hexRGB = s => { const n = parseInt(s.replace('#', ''), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+  const cv = document.getElementById('water');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const sumA = P.waves.reduce((s, v) => s + v[3], 0);
+  const wv = P.waves.map(([d, k, c, a], i) => ({
+    kx: k * Math.cos(d), kz: k * Math.sin(d), w: k * c,
+    lod: Math.min(1, Math.max(0, (k - 40) / 60)),   // how much this ripple fades toward the horizon
+    ax: (a / sumA) * Math.cos(d), az: (a / sumA) * Math.sin(d), ph: i * 2.1
+  }));
+  const waveU = new Float32Array(24);
+  let gl, u, attrs, buf, n = 0, W = 0, H = 0, dpr = 1, t = Math.random() * 40, last = 0, ok = false;
+  let LW = 0, LH = 0, rowY = [], rowStart = [0], lastScroll = -1;
+  const ocean = document.getElementById('ocean');
+  // Randomness slider (0–100). Starts from ?r=NN if given, so a value can be shared as a link.
+  // Locked settings: line spacing 42, sparkle 10. ?tune shows the sliders; ?b= / ?r= override.
+  if (new URLSearchParams(location.search).has('tune')) document.getElementById('tuner').hidden = false;
+  const RAND = { value: 0 };
+  const randEl = document.getElementById('rand'), randOut = document.getElementById('randOut');
+  const rRaw = new URLSearchParams(location.search).get('r'), rParam = Number(rRaw);
+  if (rRaw !== null && rParam >= 0 && rParam <= 100) randEl.value = String(rParam);
+  const setRand = () => { RAND.value = Number(randEl.value) / 100; randOut.textContent = randEl.value; };
+  setRand();
+  randEl.addEventListener('input', () => { setRand(); if (ok) draw(); });
+  // Line-breakup slider (0–100), ?b=NN presets it.
+  const BRK = { value: 0 };
+  const brkEl = document.getElementById('brk'), brkOut = document.getElementById('brkOut');
+  const bRaw = new URLSearchParams(location.search).get('b'), bParam = Number(bRaw);
+  if (bRaw !== null && bParam >= 0 && bParam <= 100) brkEl.value = String(bParam);
+  const setBrk = () => { BRK.value = Number(brkEl.value) / 100; brkOut.textContent = brkEl.value; };
+  setBrk();
+  brkEl.addEventListener('input', () => { setBrk(); if (ok) draw(); });
+
+  function init() {
+    try {
+      gl = cv.getContext('webgl', { antialias: false, premultipliedAlpha: true });
+      if (!gl) return false;
+      const sh = (type, src) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src); gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+        return s;
+      };
+      const pr = gl.createProgram();
+      gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS));
+      gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+      gl.linkProgram(pr);
+      if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+      gl.useProgram(pr);
+      u = {};
+      ['u_res', 'u_dpr', 'u_frame', 'u_scroll', 'u_flow', 'u_rand', 'u_break', 'u_bph', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
+        .forEach(name => { u[name] = gl.getUniformLocation(pr, name); });
+      attrs = ['a_pos', 'a_data', 'a_misc', 'a_hull'].map(name => gl.getAttribLocation(pr, name));
+      buf = gl.createBuffer();
+      const amp = new Float32Array(12);
+      wv.forEach((v, i) => { amp[i * 2] = v.ax; amp[i * 2 + 1] = v.az; });
+      gl.uniform2fv(u.u_amp, amp);
+      gl.uniform3f(u.u_gust, P.gust.k, P.gust.depth, P.gust.sx || 1);
+      const ll = Math.hypot(P.light[0], P.light[1]);
+      gl.uniform2f(u.u_light, P.light[0] / ll, P.light[1] / ll);
+      gl.uniform2f(u.u_tune, P.glint, P.contrast);
+      gl.uniform3fv(u.u_on, hexRGB(COLORS.water));
+      gl.uniform3fv(u.u_foam, hexRGB(COLORS.glint));
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
+  function sizeCanvas() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    gl.viewport(0, 0, cv.width, cv.height);
+  }
+
+  // Lay out the whole ocean in page coordinates and upload it once.
+  // First screen: perspective from a horizon just above the top. Below that the view
+  // tilts straight down, so spacing stays even and the water keeps going as you scroll.
+  function layout() {
+    if (!ok) return;
+    sizeCanvas();
+    LW = W; LH = H;
+    const oceanH = Math.max(ocean.offsetHeight, H);
+    const hz = -0.18 * H, span = H - hz;
+    // px per world unit: follows screen height, capped on narrow (portrait) screens so ripples don't turn into bands
+    const xUnit = Math.min(REF_HALF_W * span / REF_SPAN, 1.6 * W);
+    const glt = P.glitter;
+    // The bottom of the page is the side of a ship seen from above: a straight hull line
+    // running edge to edge. No water is drawn below it.
+    const bowH = Math.max(96, 0.12 * H);
+    const hullAt = () => [oceanH - bowH, 1];   // hull height, and the vertical-to-true-distance factor (1 for a flat hull)
+    const out = [];
+    rowY = []; rowStart = [];
+    let y = 2, row = 0, i = 0;
+    while (y < oceanH) {
+      const persp = y <= H;
+      const s = persp ? (y - hz) / span : 1;
+      const z = persp ? 1 / s : 1 - (y - H) / span;   // depth keeps shrinking smoothly past the seam
+      const xs = persp ? z : 1;                          // horizontal world scale
+      const f = 1 - s;
+      const gap = Math.max(MIN_GAP, NEAR_GAP * s);
+      const dot = Math.max(MIN_DOT, NEAR_DOT * s);
+      const wdt = glt.w * 2 * Math.min(xUnit, W) * (0.5 + 0.9 * s);
+      const fade = persp ? 1 : 0.6 + 0.4 * Math.exp(-(y - H) / H);   // sun column eases off lower down
+      const cols = Math.floor(W / gap);
+      const off = (W - (cols - 1) * gap) / 2 + (row % 2 ? gap / 2 : 0) - gap / 4;
+      rowY.push(y); rowStart.push(i);
+      const nearBow = y > oceanH - bowH - 300;
+      for (let c = 0; c < cols; c++) {
+        const px = off + c * gap;
+        let hd = -1;
+        if (nearBow) {
+          const [yb, k] = hullAt(px);
+          if (y > yb) continue;                 // inside the ship
+          const dist = (yb - y) / k;
+          if (dist < 300) hd = dist;
+        }
+        const d = (px - glt.x * W) / wdt;
+        out.push(px, y, (px - W / 2) / xUnit * xs * ZOOM, z * ZOOM, f,
+                 glt.boost * fade * Math.exp(-d * d), dot, (i % 4093) + 0.5, hd);
+        i++;
+      }
+      y += gap * 0.8; row++;
+    }
+    rowStart.push(i);
+    n = i;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(out), gl.STATIC_DRAW);
+    const [aPos, aData, aMisc, aHull] = attrs, STRIDE = 36;
+    gl.enableVertexAttribArray(aPos);  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, STRIDE, 0);
+    gl.enableVertexAttribArray(aData); gl.vertexAttribPointer(aData, 4, gl.FLOAT, false, STRIDE, 8);
+    gl.enableVertexAttribArray(aMisc); gl.vertexAttribPointer(aMisc, 2, gl.FLOAT, false, STRIDE, 24);
+    gl.enableVertexAttribArray(aHull); gl.vertexAttribPointer(aHull, 1, gl.FLOAT, false, STRIDE, 32);
+  }
+
+  function draw() {
+    if (!ok) return;
+    // wrap phases on the CPU so precision never drifts on long visits
+    wv.forEach((v, j) => {
+      waveU[j * 4] = v.kx; waveU[j * 4 + 1] = v.kz; waveU[j * 4 + 2] = (v.w * t - v.ph) % TAU;
+      waveU[j * 4 + 3] = v.lod;
+    });
+    gl.uniform4fv(u.u_wave, waveU);
+    gl.uniform2f(u.u_gph, (t * P.gust.w) % TAU, (t * P.gust.w * 0.8) % TAU);
+    gl.uniform2f(u.u_res, W, H);
+    gl.uniform1f(u.u_dpr, dpr);
+    gl.uniform1f(u.u_frame, Math.floor(t * 24) % 251);   // flicker stays at 24 Hz at any frame rate
+    gl.uniform1f(u.u_flow, (t * 2.2) % 4096);            // foam streams past at ~55 px/s
+    gl.uniform1f(u.u_rand, RAND.value);
+    gl.uniform1f(u.u_break, BRK.value);
+    gl.uniform1f(u.u_bph, (t * 0.04) % 500);
+    lastScroll = window.scrollY;
+    gl.uniform1f(u.u_scroll, lastScroll);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // only the rows on screen (plus a small margin) go to the GPU
+    const lo = lowerBound(rowY, lastScroll - 12), hi = lowerBound(rowY, lastScroll + H + 12);
+    gl.drawArrays(gl.POINTS, rowStart[lo], rowStart[hi] - rowStart[lo]);
+  }
+  function lowerBound(a, v) {
+    let l = 0, r = a.length;
+    while (l < r) { const m = (l + r) >> 1; if (a[m] < v) l = m + 1; else r = m; }
+    return l;
+  }
+
+  // Time advances at the frame cap (that keeps the shimmer); scrolling redraws on every
+  // display frame so the water stays glued to the page. rAF stops in background tabs.
+  function loop(now) {
+    requestAnimationFrame(loop);
+    let dirty = false;
+    if (!reduce.matches && now - last >= 1000 / FPS - 2) {
+      t += last ? Math.min((now - last) / 1000, 0.1) : 0;
+      last = now;
+      dirty = true;
+    }
+    if (window.scrollY !== lastScroll) dirty = true;
+    if (dirty) draw();
+  }
+
+  ok = init();
+  if (!ok) {
+    document.getElementById('note').innerHTML = 'This study needs WebGL, which this browser has turned off · <a href="/">Puriya Mirza</a>';
+    return;
+  }
+  layout(); draw();
+  // Rebuild the layout on real size changes; a phone's address bar sliding in and out only resizes the canvas.
+  new ResizeObserver(() => {
+    if (cv.clientWidth !== LW || Math.abs(cv.clientHeight - LH) / LH > 0.2) layout(); else sizeCanvas();
+    draw();
+  }).observe(cv);
+  // The water's length follows the content (fonts loading, text wrapping), so re-lay it when that changes.
+  let lastOceanH = ocean.offsetHeight;
+  new ResizeObserver(() => {
+    if (Math.abs(ocean.offsetHeight - lastOceanH) < 4) return;
+    lastOceanH = ocean.offsetHeight; layout(); draw();
+  }).observe(ocean);
+  reduce.addEventListener('change', () => { last = 0; draw(); });
+  cv.addEventListener('webglcontextlost', e => { e.preventDefault(); ok = false; });
+  cv.addEventListener('webglcontextrestored', () => { ok = init(); layout(); draw(); });
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
