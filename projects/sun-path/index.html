@@ -40,9 +40,9 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   padding-right: max(20px, env(safe-area-inset-right, 0px));
   padding-block: 0 calc(max(96px, 12vh) + 70vh);   /* leave open water and the hull below the cards */
 }
-/* Title block ends where the cards begin, ~150px above the bottom of the first screen */
+/* Title block ends where the cards begin: ~150px above the bottom of the first screen, then 10% lower */
 .hero {
-  min-height: calc(100svh - 150px);
+  min-height: calc(110svh - 150px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -70,7 +70,7 @@ h1 {
 a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px;
 }
 .card {
@@ -85,6 +85,9 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
+.card-wide { grid-column: 1 / -1; }
+@media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+.card strong { font-weight: 400; color: var(--paper); }
 .eyebrow { margin: 0; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--stone); }
 .card h2 {
   margin: 0;
@@ -127,29 +130,38 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
       <p class="byline" id="note">A WebGL study · <a href="/">Puriya Mirza</a></p>
     </header>
     <section class="cards" aria-label="Case study">
+      <article class="card card-wide">
+        <p class="eyebrow">The goal</p>
+        <h2>A shimmering ocean made of dots</h2>
+        <p>I wanted an ambient, animated background for my site: tiny flickering dots that move like waves. It had to feel organic and cost almost no processing power.</p>
+        <p>The result is the page you're on. A full-page WebGL water study that runs at 24 fps with almost no CPU cost, shows a still frame for people who prefer reduced motion, and pauses when the tab is hidden.</p>
+        <div class="figure">
+          <span><b>~18,600</b>dots per screen</span>
+          <span><b>24</b>frames per second</span>
+          <span><b>~8 ms → &lt;0.1 ms</b>CPU per frame, canvas to WebGL</span>
+        </div>
+      </article>
       <article class="card">
-        <p class="eyebrow">How it came together</p>
-        <h2>From flickering dots to open water</h2>
+        <p class="eyebrow">Process</p>
+        <h2>Six steps from sketch to sea</h2>
         <ol>
-          <li>Compared three cheap techniques. Only a canvas drawn with wave math could truly flicker.</li>
-          <li>Filmed real water. An angled view, dark near water, silvery far water and glints made it read as water.</li>
-          <li>Built six variations and picked the sun path, then moved it to the GPU.</li>
-          <li>Zoomed out, ran it down the page, and ended it on a ship's hull with foam.</li>
+          <li><span><strong>Three ways to build it.</strong> I compared a CSS gradient sweep, a CSS grid of fading dots, and a canvas drawn with sine-wave math. The CSS options were nearly free to run but too rigid. Only the canvas could truly flicker.</span></li>
+          <li><span><strong>Sea states.</strong> I tuned the canvas into calm, swell and choppy. Choppy came closest, but it still read as a diagram of waves.</span></li>
+          <li><span><strong>A real reference.</strong> I filmed open water and studied the frames. An angled view, dark near water, silvery far water, and glints where ripples tilt toward the light made it read as water, so I rebuilt the model around those.</span></li>
+          <li><span><strong>Variations.</strong> I generated six versions with swells, gust patches, wind streaks and a sun-glitter column, tuned glint density by distance from the horizon, and picked the sun path.</span></li>
+          <li><span><strong>Moving it to the GPU.</strong> I ported the winner to WebGL so every dot is calculated in parallel.</span></li>
+          <li><span><strong>Refining it on the real site.</strong> I zoomed out and ran the water down the page. The first screen looks to the horizon, the view tilts straight down as you scroll, and the page ends at the side of a ship with foam breaking along the hull.</span></li>
         </ol>
       </article>
       <article class="card">
         <p class="eyebrow">What I learned</p>
         <h2>Shimmer comes from choppiness</h2>
         <ul>
-          <li>One short clip of real water did more than hours of adjusting numbers.</li>
-          <li>More randomness looked less organic. I reverted it.</li>
-          <li>At 60 fps glints glide. At 24 fps they pop on and off, which reads as sparkle.</li>
+          <li><strong>Real footage beats tweaking.</strong> One short clip did more than hours of adjusting numbers.</li>
+          <li><strong>More randomness wasn't more organic.</strong> A noise-warped, 12-wave version looked worse and lost its shimmer, so I reverted it.</li>
+          <li><strong>Shimmer comes from choppiness, not smoothness.</strong> At 60 fps glints glide. At 24 fps they pop on and off, and that pop is what reads as sparkle.</li>
+          <li><strong>Prototype cheap, port once.</strong> I explored in canvas, where changes were quick, and moved only the final design to the GPU.</li>
         </ul>
-        <div class="figure">
-          <span><b>~18,600</b>dots per screen</span>
-          <span><b>24</b>frames per second</span>
-          <span><b>&lt;0.1 ms</b>CPU per frame</span>
-        </div>
       </article>
     </section>
   </main>
