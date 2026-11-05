@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sun Path · Puriya Mirza</title>
+<meta name="description" content="Sun path: wind ripples on open water, drawn in dots with WebGL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300&family=Jost:wght@400&display=swap">
+<style>
+/* Full-screen WebGL water study. Same fonts as the homepage. */
+:root {
+  --water: #0d1013;
+  --paper: #f6f3ee;
+  --stone: #a39b8c;
+  --display: "Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--water);
+  color: var(--paper);
+  font-family: var(--body);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.caption {
+  position: fixed;
+  left: max(20px, env(safe-area-inset-left, 0px));
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  display: grid;
+  gap: 6px;
+  text-shadow: 0 0 12px var(--water);
+}
+.caption h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+}
+.caption p {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+.caption a { color: inherit; text-underline-offset: 3px; }
+.caption a:hover, .caption a:focus-visible { color: var(--paper); }
+.caption a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
+</style>
+</head>
+<body>
+<canvas id="water" aria-label="Wind ripples on open water, with a column of sun glitter, drawn in tiny dots"></canvas>
+<div class="caption">
+  <h1>Sun path</h1>
+  <p id="note">A WebGL study · <a href="/">Puriya Mirza</a></p>
+</div>
+
+<script>
+(() => {
+  // ---------- settings ----------
+  const FPS = 60;                 // frame cap
+  const COLORS = { water: '#5ab0ff', glint: '#e8f4ff' };
+  const NEAR_GAP = 7, MIN_GAP = 3, NEAR_DOT = 1.9, MIN_DOT = 1;   // dot spacing/size in CSS px
+  // The study was tuned on a 260px-tall stage; world scale follows screen height so it looks the same at any size.
+  const REF_SPAN = 307, REF_HALF_W = 440;
+  const BREEZE = [[0.15, 38, 0.10, 1], [-0.45, 52, 0.11, 0.75], [0.75, 30, 0.08, 0.55],
+                  [-1.0, 71, 0.12, 0.4], [0.35, 96, 0.13, 0.3]];
+  const P = {
+    // [direction rad, wavenumber, speed, amplitude], rotated and scaled for this variant
+    waves: BREEZE.map(([d, k, c, a]) => [d - 0.3, k * 1.15, c, a]),
+    gust: { k: 0.7, w: 0.25, depth: 0.5 },
+    glint: 0.95, contrast: 0.3, light: [0.3, 0.95],
+    glitter: { x: 0.62, w: 0.16, boost: 0.8 }   // sun column: x across screen (0–1), width, strength
+  };
+
+  // ---------- shaders: one GPU thread per dot ----------
+  const VS = `
+    precision highp float;
+    attribute vec2 a_pos;   // CSS px
+    attribute vec4 a_data;  // world X, world Z, distance (0 near, 1 far), glitter weight
+    attribute vec2 a_misc;  // dot size, random seed
+    uniform vec2 u_res;
+    uniform float u_dpr;
+    uniform float u_frame;
+    uniform vec4 u_wave[6]; // kx, kz, phase
+    uniform vec2 u_amp[6];
+    uniform vec3 u_gust;    // k, depth, x-stretch
+    uniform vec2 u_gph;
+    uniform vec2 u_light;
+    uniform vec2 u_tune;    // glint threshold, contrast
+    uniform vec3 u_on;
+    uniform vec3 u_foam;
+    varying vec4 v_col;
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    void main() {
+      float x = a_data.x, z = a_data.y, f = a_data.z, glt = a_data.w;
+      float gx = 0.0, gz = 0.0;
+      for (int j = 0; j < 6; j++) {
+        float c = cos(u_wave[j].x * x + u_wave[j].y * z - u_wave[j].z);
+        gx += u_amp[j].x * c;
+        gz += u_amp[j].y * c;
+      }
+      float k = u_gust.x, sx = u_gust.z;
+      float g = sin(x * k * sx + z * k * 0.7 - u_gph.x) *
+                sin(x * k * 0.6 * sx - z * k * 1.3 + u_gph.y + 2.0);
+      float env = 1.0 - u_gust.y + u_gust.y * 0.5 * (1.0 + g);
+      float v = (gx * u_light.x + gz * u_light.y) * env * 2.4;
+      float r1 = hash(vec2(a_misc.y, u_frame));
+      float r2 = hash(vec2(a_misc.y + 7.13, u_frame));
+      float thr = u_tune.x + 0.15 - 0.7 * f - glt + r1 * 0.1;
+      float size = a_misc.x;
+      vec3 col = u_on;
+      float a;
+      if (v > thr) { col = u_foam; a = 1.0; size *= 1.25; }
+      else if (v > thr - (0.15 + 0.25 * f)) { a = 0.88; }
+      else {
+        float base = 0.24 + 0.42 * pow(f, 1.2);
+        float b = clamp(base + 0.12 * glt + u_tune.y * v * (1.0 - 0.4 * f) + (r2 - 0.5) * 0.08, 0.0, 1.0);
+        a = 0.08 + 0.66 * pow(b, 1.15);
+      }
+      gl_Position = vec4(a_pos.x / u_res.x * 2.0 - 1.0, 1.0 - a_pos.y / u_res.y * 2.0, 0.0, 1.0);
+      gl_PointSize = size * u_dpr;
+      v_col = vec4(col * a, a);
+    }`;
+  const FS = `
+    precision mediump float;
+    varying vec4 v_col;
+    void main() { gl_FragColor = v_col; }`;
+
+  const TAU = Math.PI * 2;
+  const hexRGB = s => { const n = parseInt(s.replace('#', ''), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+  const cv = document.getElementById('water');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const sumA = P.waves.reduce((s, v) => s + v[3], 0);
+  const wv = P.waves.map(([d, k, c, a], i) => ({
+    kx: k * Math.cos(d), kz: k * Math.sin(d), w: k * c,
+    ax: (a / sumA) * Math.cos(d), az: (a / sumA) * Math.sin(d), ph: i * 2.1
+  }));
+  const waveU = new Float32Array(24);
+  let gl, u, attrs, buf, n = 0, W = 0, H = 0, dpr = 1, t = Math.random() * 40, last = 0, ok = false;
+
+  function init() {
+    try {
+      gl = cv.getContext('webgl', { antialias: false, premultipliedAlpha: true });
+      if (!gl) return false;
+      const sh = (type, src) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src); gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+        return s;
+      };
+      const pr = gl.createProgram();
+      gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS));
+      gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+      gl.linkProgram(pr);
+      if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+      gl.useProgram(pr);
+      u = {};
+      ['u_res', 'u_dpr', 'u_frame', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
+        .forEach(name => { u[name] = gl.getUniformLocation(pr, name); });
+      attrs = ['a_pos', 'a_data', 'a_misc'].map(name => gl.getAttribLocation(pr, name));
+      buf = gl.createBuffer();
+      const amp = new Float32Array(12);
+      wv.forEach((v, i) => { amp[i * 2] = v.ax; amp[i * 2 + 1] = v.az; });
+      gl.uniform2fv(u.u_amp, amp);
+      gl.uniform3f(u.u_gust, P.gust.k, P.gust.depth, P.gust.sx || 1);
+      const ll = Math.hypot(P.light[0], P.light[1]);
+      gl.uniform2f(u.u_light, P.light[0] / ll, P.light[1] / ll);
+      gl.uniform2f(u.u_tune, P.glint, P.contrast);
+      gl.uniform3fv(u.u_on, hexRGB(COLORS.water));
+      gl.uniform3fv(u.u_foam, hexRGB(COLORS.glint));
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
+  // Lay dots out in perspective (horizon just above the screen) and upload them once.
+  function layout() {
+    if (!ok) return;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    gl.viewport(0, 0, cv.width, cv.height);
+    const hz = -0.18 * H, span = H - hz;
+    // px per world unit: follows screen height, capped on narrow (portrait) screens so ripples don't turn into bands
+    const xUnit = Math.min(REF_HALF_W * span / REF_SPAN, 1.6 * W);
+    const glt = P.glitter;
+    const out = [];
+    let y = H - 3, row = 0, i = 0;
+    while (y > 0) {
+      const s = (y - hz) / span, z = 1 / s, f = 1 - s;
+      const gap = Math.max(MIN_GAP, NEAR_GAP * s);
+      const dot = Math.max(MIN_DOT, NEAR_DOT * s);
+      const cols = Math.floor(W / gap);
+      const off = (W - (cols - 1) * gap) / 2 + (row % 2 ? gap / 2 : 0) - gap / 4;
+      for (let c = 0; c < cols; c++, i++) {
+        const px = off + c * gap;
+        const wdt = glt.w * 2 * Math.min(xUnit, W) * (0.5 + 0.9 * s);
+        const d = (px - glt.x * W) / wdt;
+        out.push(px, y, (px - W / 2) / xUnit * z, z, f, glt.boost * Math.exp(-d * d), dot, (i % 4093) + 0.5);
+      }
+      y -= gap * 0.8; row++;
+    }
+    n = i;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(out), gl.STATIC_DRAW);
+    const [aPos, aData, aMisc] = attrs, STRIDE = 32;
+    gl.enableVertexAttribArray(aPos);  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, STRIDE, 0);
+    gl.enableVertexAttribArray(aData); gl.vertexAttribPointer(aData, 4, gl.FLOAT, false, STRIDE, 8);
+    gl.enableVertexAttribArray(aMisc); gl.vertexAttribPointer(aMisc, 2, gl.FLOAT, false, STRIDE, 24);
+  }
+
+  function draw() {
+    if (!ok) return;
+    // wrap phases on the CPU so precision never drifts on long visits
+    wv.forEach((v, j) => {
+      waveU[j * 4] = v.kx; waveU[j * 4 + 1] = v.kz; waveU[j * 4 + 2] = (v.w * t - v.ph) % TAU;
+    });
+    gl.uniform4fv(u.u_wave, waveU);
+    gl.uniform2f(u.u_gph, (t * P.gust.w) % TAU, (t * P.gust.w * 0.8) % TAU);
+    gl.uniform2f(u.u_res, W, H);
+    gl.uniform1f(u.u_dpr, dpr);
+    gl.uniform1f(u.u_frame, Math.floor(t * 24) % 251);   // flicker stays at 24 Hz at any frame rate
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, n);
+  }
+
+  // requestAnimationFrame already stops in background tabs; reduced motion gets one still frame.
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (reduce.matches || now - last < 1000 / FPS - 2) return;
+    t += last ? Math.min((now - last) / 1000, 0.1) : 0;
+    last = now;
+    draw();
+  }
+
+  ok = init();
+  if (!ok) {
+    document.getElementById('note').innerHTML = 'This study needs WebGL, which this browser has turned off · <a href="/">Puriya Mirza</a>';
+    return;
+  }
+  layout(); draw();
+  new ResizeObserver(() => { layout(); draw(); }).observe(cv);
+  reduce.addEventListener('change', () => { last = 0; draw(); });
+  cv.addEventListener('webglcontextlost', e => { e.preventDefault(); ok = false; });
+  cv.addEventListener('webglcontextrestored', () => { ok = init(); layout(); draw(); });
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
