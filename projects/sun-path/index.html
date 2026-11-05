@@ -116,11 +116,12 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
   position: fixed; z-index: 5;
   top: max(12px, env(safe-area-inset-top, 0px));
   right: max(12px, env(safe-area-inset-right, 0px));
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; border-radius: 999px;
+  display: grid; gap: 6px;
+  padding: 10px 14px; border-radius: 16px;
   background: var(--ink-80); border: 1px solid var(--rule);
   font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--stone);
 }
+.tune-row { display: grid; grid-template-columns: 8.5em 1fr 2.5em; align-items: center; gap: 10px; }
 .tuner input { width: min(40vw, 180px); accent-color: var(--paper); }
 .tuner output { min-width: 2.5em; text-align: right; color: var(--paper); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .deck {
@@ -180,9 +181,16 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
 </div>
 <!-- Temporary tuning control: remove once a value is chosen -->
 <div class="tuner">
-  <label for="rand">Randomness</label>
-  <input type="range" id="rand" min="0" max="100" step="1" value="0">
-  <output id="randOut" for="rand">0</output>
+  <div class="tune-row">
+    <label for="brk">Break up lines</label>
+    <input type="range" id="brk" min="0" max="100" step="1" value="0">
+    <output id="brkOut" for="brk">0</output>
+  </div>
+  <div class="tune-row">
+    <label for="rand">Sparkle</label>
+    <input type="range" id="rand" min="0" max="100" step="1" value="16">
+    <output id="randOut" for="rand">16</output>
+  </div>
 </div>
 
 <script>
@@ -217,6 +225,8 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
     uniform vec2 u_res;
     uniform float u_flow;   // how far the water has streamed past the bow
     uniform float u_rand;   // shimmer randomness, 0 = original look
+    uniform float u_break;  // crest breakup, 0 = straight crests
+    uniform float u_bph;    // slow drift of the breakup pattern
     uniform float u_dpr;
     uniform float u_frame;
     uniform float u_scroll; // page scroll, CSS px
@@ -255,7 +265,10 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
       for (int j = 0; j < 6; j++) {
         // fine ripples fade out near the horizon, where they'd be smaller than the dot spacing and alias into a grid
         float fd = 1.0 - smoothstep(0.35, 0.85, f) * u_wave[j].w;
-        float c = cos(u_wave[j].x * x + u_wave[j].y * z - u_wave[j].z) * fd;
+        // Crest breakup: each ripple layer gets its own slow, patchy phase shift, so long straight
+        // crests (which perspective turns into radiating stripes) wobble and split into segments.
+        float jit = (vnoise(vec2(x, z) * 2.4 + float(j) * 13.1 + u_bph) - 0.5) * 5.0 * u_break;
+        float c = cos(u_wave[j].x * x + u_wave[j].y * z - u_wave[j].z + jit) * fd;
         gx += u_amp[j].x * c;
         gz += u_amp[j].y * c;
       }
@@ -310,11 +323,19 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
   // Randomness slider (0–100). Starts from ?r=NN if given, so a value can be shared as a link.
   const RAND = { value: 0 };
   const randEl = document.getElementById('rand'), randOut = document.getElementById('randOut');
-  const rParam = Number(new URLSearchParams(location.search).get('r'));
-  if (rParam >= 0 && rParam <= 100) randEl.value = String(rParam);
+  const rRaw = new URLSearchParams(location.search).get('r'), rParam = Number(rRaw);
+  if (rRaw !== null && rParam >= 0 && rParam <= 100) randEl.value = String(rParam);
   const setRand = () => { RAND.value = Number(randEl.value) / 100; randOut.textContent = randEl.value; };
   setRand();
   randEl.addEventListener('input', () => { setRand(); if (ok) draw(); });
+  // Line-breakup slider (0–100), ?b=NN presets it.
+  const BRK = { value: 0 };
+  const brkEl = document.getElementById('brk'), brkOut = document.getElementById('brkOut');
+  const bRaw = new URLSearchParams(location.search).get('b'), bParam = Number(bRaw);
+  if (bRaw !== null && bParam >= 0 && bParam <= 100) brkEl.value = String(bParam);
+  const setBrk = () => { BRK.value = Number(brkEl.value) / 100; brkOut.textContent = brkEl.value; };
+  setBrk();
+  brkEl.addEventListener('input', () => { setBrk(); if (ok) draw(); });
 
   function init() {
     try {
@@ -333,7 +354,7 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
       if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
       gl.useProgram(pr);
       u = {};
-      ['u_res', 'u_dpr', 'u_frame', 'u_scroll', 'u_flow', 'u_rand', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
+      ['u_res', 'u_dpr', 'u_frame', 'u_scroll', 'u_flow', 'u_rand', 'u_break', 'u_bph', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
         .forEach(name => { u[name] = gl.getUniformLocation(pr, name); });
       attrs = ['a_pos', 'a_data', 'a_misc', 'a_hull'].map(name => gl.getAttribLocation(pr, name));
       buf = gl.createBuffer();
@@ -436,6 +457,8 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
     gl.uniform1f(u.u_frame, Math.floor(t * 24) % 251);   // flicker stays at 24 Hz at any frame rate
     gl.uniform1f(u.u_flow, (t * 2.2) % 4096);            // foam streams past at ~55 px/s
     gl.uniform1f(u.u_rand, RAND.value);
+    gl.uniform1f(u.u_break, BRK.value);
+    gl.uniform1f(u.u_bph, (t * 0.04) % 500);
     lastScroll = window.scrollY;
     gl.uniform1f(u.u_scroll, lastScroll);
     gl.clearColor(0, 0, 0, 0);
