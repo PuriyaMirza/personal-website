@@ -261,14 +261,23 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
     }
     void main() {
       float x = a_data.x, z = a_data.y, f = a_data.z, glt = a_data.w;
+      // Uneven curvature: bend the whole ripple field with slow noise so crests curve by
+      // different amounts from place to place.
+      vec2 wp = vec2(x, z);
+      vec2 bend = vec2(vnoise(wp * 1.1 + 3.7 + u_bph), vnoise(wp * 1.1 - 6.1 - u_bph)) - 0.5;
+      vec2 bp = wp + bend * 0.35 * u_break;
       float gx = 0.0, gz = 0.0;
       for (int j = 0; j < 6; j++) {
         // fine ripples fade out near the horizon, where they'd be smaller than the dot spacing and alias into a grid
         float fd = 1.0 - smoothstep(0.35, 0.85, f) * u_wave[j].w;
+        float fj = float(j);
         // Crest breakup: each ripple layer gets its own slow, patchy phase shift, so long straight
         // crests (which perspective turns into radiating stripes) wobble and split into segments.
-        float jit = (vnoise(vec2(x, z) * 2.4 + float(j) * 13.1 + u_bph) - 0.5) * 5.0 * u_break;
-        float c = cos(u_wave[j].x * x + u_wave[j].y * z - u_wave[j].z + jit) * fd;
+        float jit = (vnoise(bp * 2.4 + fj * 13.1 + u_bph) - 0.5) * 5.0 * u_break;
+        // Uneven spacing: a broad, strong phase field squeezes crests together in some places
+        // and spreads them apart in others.
+        float gapv = (vnoise(bp * 0.9 + fj * 5.3 - u_bph * 0.6) - 0.5) * 14.0 * u_break;
+        float c = cos(u_wave[j].x * bp.x + u_wave[j].y * bp.y - u_wave[j].z + jit + gapv) * fd;
         gx += u_amp[j].x * c;
         gz += u_amp[j].y * c;
       }
