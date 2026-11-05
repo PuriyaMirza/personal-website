@@ -122,15 +122,16 @@ canvas {
       return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), s.x),
                  mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), s.x), s.y);
     }
-    // Foam where the water breaks on the bow: a churning white band hugging the hull,
-    // plus a broken second crest further out, both streaming down and away from the tip.
+    // Foam where the water runs along the ship's side: a churning white band hugging the hull,
+    // plus a broken, rolling second crest further out. Streaks stretch along the hull and
+    // stream sideways as the ship moves.
     float bowFoam(float d) {
       if (d < 0.0) return 0.0;
-      float side = sign(a_pos.x - u_res.x * 0.5);
-      vec2 p = a_pos * 0.04 + vec2(-side * u_flow * 0.5, -u_flow);
+      vec2 p = vec2(a_pos.x * 0.022 + u_flow, a_pos.y * 0.06);
       float n = vnoise(p) * 0.6 + vnoise(p * 2.3 + 4.1) * 0.4;
       float hug = exp(-d / 40.0);
-      float crest = exp(-pow((d - 78.0) / 22.0, 2.0)) * 0.75;
+      float roll = 18.0 * sin(a_pos.x * 0.012 + u_flow * 0.55);   // crest line rises and falls as it travels
+      float crest = exp(-pow((d - 78.0 - roll) / 22.0, 2.0)) * 0.75;
       float spray = exp(-d / 120.0) * 0.25;
       return clamp(hug * (0.55 + 0.7 * n) + (crest + spray) * smoothstep(0.45, 0.8, n), 0.0, 1.0);
     }
@@ -246,15 +247,10 @@ canvas {
     // px per world unit: follows screen height, capped on narrow (portrait) screens so ripples don't turn into bands
     const xUnit = Math.min(REF_HALF_W * span / REF_SPAN, 1.6 * W);
     const glt = P.glitter;
-    // The bottom of the page is a ship's bow seen from above: a point at the center, hull lines
-    // sweeping back and out past the screen edges. No water is drawn inside it.
-    const bowH = Math.min(0.32 * H, 0.5 * W), bowHalf = W * 0.62, BOW_P = 1.1;
-    const hullAt = px => {
-      const q = Math.min(1, Math.abs(px - W / 2) / bowHalf);
-      const yb = oceanH - bowH * (1 - Math.pow(q, BOW_P));
-      const slope = bowH * BOW_P * Math.pow(q, BOW_P - 1) / bowHalf;
-      return [yb, Math.sqrt(1 + slope * slope)];   // hull height, and a factor to turn vertical gap into true distance
-    };
+    // The bottom of the page is the side of a ship seen from above: a straight hull line
+    // running edge to edge. No water is drawn below it.
+    const bowH = Math.max(96, 0.12 * H);
+    const hullAt = () => [oceanH - bowH, 1];   // hull height, and the vertical-to-true-distance factor (1 for a flat hull)
     const out = [];
     rowY = []; rowStart = [];
     let y = 2, row = 0, i = 0;
