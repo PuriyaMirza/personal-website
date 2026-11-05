@@ -7,13 +7,15 @@
 <meta name="description" content="Sun path: wind ripples on open water, drawn in dots with WebGL.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300&family=Jost:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400&family=Jost:wght@400&display=swap">
 <style>
-/* Full-screen WebGL water study. Same fonts as the homepage. */
+/* WebGL water study with its case study. Homepage palette and fonts; cards are 80% ink over the water. */
 :root {
   --water: #0d1013;
+  --ink-80: rgba(25, 26, 24, 0.8);   /* homepage --ink at 80% */
   --paper: #f6f3ee;
   --stone: #a39b8c;
+  --rule: rgba(163, 155, 140, 0.28);
   --display: "Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --body: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
   color-scheme: dark;
@@ -27,50 +29,132 @@ body {
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
 }
-/* The scrollable length of water. The canvas stays fixed and redraws at the scroll position. */
-.ocean { height: 320vh; }
-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+/* The scrollable length of water. The canvas stays fixed and redraws at the scroll position;
+   the page ends at a ship's hull, drawn by the script, with the footer on its deck. */
+.ocean { position: relative; min-height: 300vh; }
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(max(96px, 12vh) + 70vh);   /* leave open water and the hull below the cards */
 }
-.caption {
-  position: fixed;
-  left: max(20px, env(safe-area-inset-left, 0px));
-  bottom: max(20px, env(safe-area-inset-bottom, 0px));
-  display: grid;
-  gap: 6px;
-  text-shadow: 0 0 12px var(--water);
+/* Title block ends where the cards begin, ~150px above the bottom of the first screen */
+.hero {
+  min-height: calc(100svh - 150px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 28px;
+  text-shadow: 0 0 14px var(--water);
 }
-.caption h1 {
+h1 {
   margin: 0;
   font-family: var(--display);
   font-weight: 300;
-  font-size: clamp(32px, 5vw, 56px);
-  line-height: 0.9;
-  letter-spacing: -0.01em;
+  font-size: clamp(48px, 8vw, 104px);
+  line-height: 0.88;
+  letter-spacing: -0.015em;
 }
-.caption p {
+.byline, .deck {
   margin: 0;
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--stone);
 }
-.caption a { color: inherit; text-underline-offset: 3px; }
-.caption a:hover, .caption a:focus-visible { color: var(--paper); }
-.caption a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
+.byline a, .deck a { color: inherit; text-underline-offset: 3px; }
+.byline a:hover, .deck a:hover, a:focus-visible { color: var(--paper); }
+a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+}
+.card {
+  min-width: 0;
+  background: var(--ink-80);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 26px 26px 28px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.eyebrow { margin: 0; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--stone); }
+.card h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.card p, .card li { font-size: 15px; line-height: 1.6; color: rgba(246, 243, 238, 0.86); }
+.card p { margin: 0; max-width: 60ch; }
+.card ol, .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.card ol { counter-reset: step; }
+.card ol li { counter-increment: step; display: grid; grid-template-columns: 26px 1fr; }
+.card ol li::before { content: counter(step); font-family: var(--display); font-size: 18px; color: var(--stone); line-height: 1.4; }
+.card ul li { padding-left: 14px; border-left: 1px solid var(--rule); }
+.figure {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  padding-top: 14px; border-top: 1px solid var(--rule);
+  font-size: 12px; letter-spacing: 0.06em; color: var(--stone);
+  font-variant-numeric: tabular-nums;
+}
+.figure b { display: block; font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: 0; color: var(--paper); }
+/* Footer sits on the ship's deck, below the hull line */
+.deck {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: max(96px, 12vh);
+  display: flex; align-items: center; justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
 </style>
 </head>
 <body>
 <canvas id="water" aria-label="Wind ripples on open water, with a column of sun glitter, drawn in tiny dots"></canvas>
-<div class="caption">
-  <h1>Sun path</h1>
-  <p id="note">A WebGL study · <a href="/">Puriya Mirza</a></p>
+<div class="ocean" id="ocean">
+  <main class="page">
+    <header class="hero">
+      <h1>Sun path</h1>
+      <p class="byline" id="note">A WebGL study · <a href="/">Puriya Mirza</a></p>
+    </header>
+    <section class="cards" aria-label="Case study">
+      <article class="card">
+        <p class="eyebrow">How it came together</p>
+        <h2>From flickering dots to open water</h2>
+        <ol>
+          <li>Compared three cheap techniques. Only a canvas drawn with wave math could truly flicker.</li>
+          <li>Filmed real water. An angled view, dark near water, silvery far water and glints made it read as water.</li>
+          <li>Built six variations and picked the sun path, then moved it to the GPU.</li>
+          <li>Zoomed out, ran it down the page, and ended it on a ship's hull with foam.</li>
+        </ol>
+      </article>
+      <article class="card">
+        <p class="eyebrow">What I learned</p>
+        <h2>Shimmer comes from choppiness</h2>
+        <ul>
+          <li>One short clip of real water did more than hours of adjusting numbers.</li>
+          <li>More randomness looked less organic. I reverted it.</li>
+          <li>At 60 fps glints glide. At 24 fps they pop on and off, which reads as sparkle.</li>
+        </ul>
+        <div class="figure">
+          <span><b>~18,600</b>dots per screen</span>
+          <span><b>24</b>frames per second</span>
+          <span><b>&lt;0.1 ms</b>CPU per frame</span>
+        </div>
+      </article>
+    </section>
+  </main>
+  <p class="deck"><a href="/">Puriya Mirza</a></p>
 </div>
-<div class="ocean" id="ocean" aria-hidden="true"></div>
 
 <script>
 (() => {
@@ -347,6 +431,12 @@ canvas {
     if (cv.clientWidth !== LW || Math.abs(cv.clientHeight - LH) / LH > 0.2) layout(); else sizeCanvas();
     draw();
   }).observe(cv);
+  // The water's length follows the content (fonts loading, text wrapping), so re-lay it when that changes.
+  let lastOceanH = ocean.offsetHeight;
+  new ResizeObserver(() => {
+    if (Math.abs(ocean.offsetHeight - lastOceanH) < 4) return;
+    lastOceanH = ocean.offsetHeight; layout(); draw();
+  }).observe(ocean);
   reduce.addEventListener('change', () => { last = 0; draw(); });
   cv.addEventListener('webglcontextlost', e => { e.preventDefault(); ok = false; });
   cv.addEventListener('webglcontextrestored', () => { ok = init(); layout(); draw(); });
