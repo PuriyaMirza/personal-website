@@ -112,6 +112,7 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
 }
 .figure b { display: block; font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: 0; color: var(--paper); }
 /* Footer sits on the ship's deck, below the hull line */
+[hidden] { display: none !important; }
 .tuner {
   position: fixed; z-index: 5;
   top: max(12px, env(safe-area-inset-top, 0px));
@@ -179,17 +180,17 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
   </main>
   <p class="deck"><a href="/">Puriya Mirza</a></p>
 </div>
-<!-- Temporary tuning control: remove once a value is chosen -->
-<div class="tuner">
+<!-- Tuning panel: hidden by default; add ?tune to the URL to show it again -->
+<div class="tuner" id="tuner" hidden>
   <div class="tune-row">
     <label for="brk">Line spacing</label>
-    <input type="range" id="brk" min="0" max="100" step="1" value="0">
-    <output id="brkOut" for="brk">0</output>
+    <input type="range" id="brk" min="0" max="100" step="1" value="42">
+    <output id="brkOut" for="brk">42</output>
   </div>
   <div class="tune-row">
     <label for="rand">Sparkle</label>
-    <input type="range" id="rand" min="0" max="100" step="1" value="16">
-    <output id="randOut" for="rand">16</output>
+    <input type="range" id="rand" min="0" max="100" step="1" value="10">
+    <output id="randOut" for="rand">10</output>
   </div>
 </div>
 
@@ -334,6 +335,8 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
   let LW = 0, LH = 0, rowY = [], rowStart = [0], lastScroll = -1;
   const ocean = document.getElementById('ocean');
   // Randomness slider (0–100). Starts from ?r=NN if given, so a value can be shared as a link.
+  // Locked settings: line spacing 42, sparkle 10. ?tune shows the sliders; ?b= / ?r= override.
+  if (new URLSearchParams(location.search).has('tune')) document.getElementById('tuner').hidden = false;
   const RAND = { value: 0 };
   const randEl = document.getElementById('rand'), randOut = document.getElementById('randOut');
   const rRaw = new URLSearchParams(location.search).get('r'), rParam = Number(rRaw);
