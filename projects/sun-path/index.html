@@ -112,6 +112,17 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
 }
 .figure b { display: block; font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: 0; color: var(--paper); }
 /* Footer sits on the ship's deck, below the hull line */
+.tuner {
+  position: fixed; z-index: 5;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 999px;
+  background: var(--ink-80); border: 1px solid var(--rule);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--stone);
+}
+.tuner input { width: min(40vw, 180px); accent-color: var(--paper); }
+.tuner output { min-width: 2.5em; text-align: right; color: var(--paper); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .deck {
   position: absolute;
   left: 0; right: 0; bottom: 0;
@@ -167,6 +178,12 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
   </main>
   <p class="deck"><a href="/">Puriya Mirza</a></p>
 </div>
+<!-- Temporary tuning control: remove once a value is chosen -->
+<div class="tuner">
+  <label for="rand">Randomness</label>
+  <input type="range" id="rand" min="0" max="100" step="1" value="0">
+  <output id="randOut" for="rand">0</output>
+</div>
 
 <script>
 (() => {
@@ -199,6 +216,7 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
     attribute float a_hull; // distance to the bow's hull in px, or -1 when far from it
     uniform vec2 u_res;
     uniform float u_flow;   // how far the water has streamed past the bow
+    uniform float u_rand;   // shimmer randomness, 0 = original look
     uniform float u_dpr;
     uniform float u_frame;
     uniform float u_scroll; // page scroll, CSS px
@@ -248,7 +266,12 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
       float v = (gx * u_light.x + gz * u_light.y) * env * 2.4;
       float r1 = hash(vec2(a_misc.y, u_frame));
       float r2 = hash(vec2(a_misc.y + 7.13, u_frame));
-      float thr = u_tune.x + 0.15 - 0.7 * f - glt + r1 * 0.1;
+      // Shimmer randomness: a per-frame flicker on each dot, plus a fixed per-dot bias so some
+      // dots catch light more easily than others. At u_rand = 0 this matches the original look.
+      float bias = hash(vec2(a_misc.y * 1.37, 3.1)) - 0.5;
+      float thr = u_tune.x + 0.15 - 0.7 * f - glt + 0.05
+                + (r1 - 0.5) * (0.1 + 0.9 * u_rand)
+                + bias * 0.7 * u_rand;
       float foam = bowFoam(a_hull);
       float size = a_misc.x;
       vec3 col = u_on;
@@ -258,7 +281,7 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
       else if (v > thr - (0.15 + 0.25 * f) || foam > 0.3) { a = 0.88; }
       else {
         float base = 0.24 + 0.42 * pow(f, 1.2);
-        float b = clamp(base + 0.12 * glt + 0.6 * foam + u_tune.y * v * (1.0 - 0.4 * f) + (r2 - 0.5) * 0.08, 0.0, 1.0);
+        float b = clamp(base + 0.12 * glt + 0.6 * foam + u_tune.y * v * (1.0 - 0.4 * f) + (r2 - 0.5) * (0.08 + 0.3 * u_rand), 0.0, 1.0);
         a = 0.08 + 0.66 * pow(b, 1.15);
       }
       gl_Position = vec4(a_pos.x / u_res.x * 2.0 - 1.0, 1.0 - (a_pos.y - u_scroll) / u_res.y * 2.0, 0.0, 1.0);
@@ -284,6 +307,14 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
   let gl, u, attrs, buf, n = 0, W = 0, H = 0, dpr = 1, t = Math.random() * 40, last = 0, ok = false;
   let LW = 0, LH = 0, rowY = [], rowStart = [0], lastScroll = -1;
   const ocean = document.getElementById('ocean');
+  // Randomness slider (0–100). Starts from ?r=NN if given, so a value can be shared as a link.
+  const RAND = { value: 0 };
+  const randEl = document.getElementById('rand'), randOut = document.getElementById('randOut');
+  const rParam = Number(new URLSearchParams(location.search).get('r'));
+  if (rParam >= 0 && rParam <= 100) randEl.value = String(rParam);
+  const setRand = () => { RAND.value = Number(randEl.value) / 100; randOut.textContent = randEl.value; };
+  setRand();
+  randEl.addEventListener('input', () => { setRand(); if (ok) draw(); });
 
   function init() {
     try {
@@ -302,7 +333,7 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
       if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
       gl.useProgram(pr);
       u = {};
-      ['u_res', 'u_dpr', 'u_frame', 'u_scroll', 'u_flow', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
+      ['u_res', 'u_dpr', 'u_frame', 'u_scroll', 'u_flow', 'u_rand', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
         .forEach(name => { u[name] = gl.getUniformLocation(pr, name); });
       attrs = ['a_pos', 'a_data', 'a_misc', 'a_hull'].map(name => gl.getAttribLocation(pr, name));
       buf = gl.createBuffer();
@@ -404,6 +435,7 @@ a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
     gl.uniform1f(u.u_dpr, dpr);
     gl.uniform1f(u.u_frame, Math.floor(t * 24) % 251);   // flicker stays at 24 Hz at any frame rate
     gl.uniform1f(u.u_flow, (t * 2.2) % 4096);            // foam streams past at ~55 px/s
+    gl.uniform1f(u.u_rand, RAND.value);
     lastScroll = window.scrollY;
     gl.uniform1f(u.u_scroll, lastScroll);
     gl.clearColor(0, 0, 0, 0);
