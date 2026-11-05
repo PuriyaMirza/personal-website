@@ -78,15 +78,31 @@ canvas {
   const NEAR_GAP = 7, MIN_GAP = 3, NEAR_DOT = 1.9, MIN_DOT = 1;   // dot spacing/size in CSS px
   // The study was tuned on a 260px-tall stage; world scale follows screen height so it looks the same at any size.
   const REF_SPAN = 307, REF_HALF_W = 440;
-  const BREEZE = [[0.15, 38, 0.10, 1], [-0.45, 52, 0.11, 0.75], [0.75, 30, 0.08, 0.55],
-                  [-1.0, 71, 0.12, 0.4], [0.35, 96, 0.13, 0.3]];
   const P = {
-    // [direction rad, wavenumber, speed, amplitude], rotated and scaled for this variant
-    waves: BREEZE.map(([d, k, c, a]) => [d - 0.3, k * 1.15, c, a]),
-    gust: { k: 0.7, w: 0.25, depth: 0.5 },
+    gust: { k: 1.0, depth: 0.55 },             // wind patches: size (per world unit), strength
     glint: 0.95, contrast: 0.3, light: [0.3, 0.95],
     glitter: { x: 0.62, w: 0.16, boost: 0.8 }   // sun column: x across screen (0–1), width, strength
   };
+
+  // ---------- a fresh wave set on every visit ----------
+  // 12 ripple trains: directions spread around the wind, sizes log-spaced, smaller ripples weaker.
+  const NW = 12, WIND_DIR = -0.25, WIND_SPREAD = 1.1, K_MIN = 30, K_MAX = 130;
+  const MOD0 = 0.7, MOD1 = 0.3;   // each train's strength drifts between 40% and 100% on its own clock
+  const TAU = Math.PI * 2;
+  const slots = [...Array(NW).keys()];
+  for (let i = NW - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [slots[i], slots[j]] = [slots[j], slots[i]]; }
+  const wv = slots.map((slot, j) => {
+    const d = WIND_DIR + WIND_SPREAD * (((slot + Math.random()) / NW) * 2 - 1);
+    const k = K_MIN * Math.pow(K_MAX / K_MIN, (j + Math.random()) / NW);
+    const a = Math.pow(k / K_MIN, -0.7) * (0.7 + Math.random() * 0.6);
+    const c = 0.08 + Math.random() * 0.05;
+    return { d, k, a, w: k * c, kx: k * Math.cos(d), kz: k * Math.sin(d),
+             ph: Math.random() * TAU, mf: 0.05 + Math.random() * 0.15, mp: Math.random() * TAU };
+  });
+  // scale amplitudes so overall contrast matches the tuned study
+  const sumA2 = wv.reduce((s, v) => s + v.a * v.a, 0);
+  const norm = Math.sqrt(0.235 / (sumA2 * (MOD0 * MOD0 + MOD1 * MOD1 / 2)));
+  wv.forEach(v => { v.ax = v.a * norm * Math.cos(v.d); v.az = v.a * norm * Math.sin(v.d); });
 
   // ---------- shaders: one GPU thread per dot ----------
   const VS = `
@@ -97,29 +113,44 @@ canvas {
     uniform vec2 u_res;
     uniform float u_dpr;
     uniform float u_frame;
-    uniform vec4 u_wave[6]; // kx, kz, phase
-    uniform vec2 u_amp[6];
-    uniform vec3 u_gust;    // k, depth, x-stretch
-    uniform vec2 u_gph;
+    uniform vec4 u_wave[12]; // kx, kz, phase
+    uniform vec2 u_amp[12];  // current strength, split into x/z
+    uniform vec2 u_gust;     // patch size, depth
+    uniform vec2 u_gph;      // patch drift
+    uniform vec4 u_warp;     // warp drift
     uniform vec2 u_light;
-    uniform vec2 u_tune;    // glint threshold, contrast
+    uniform vec2 u_tune;     // glint threshold, contrast
     uniform vec3 u_on;
     uniform vec3 u_foam;
     varying vec4 v_col;
     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    float vnoise(vec2 p) {
+      vec2 i = floor(p), f = fract(p);
+      vec2 s = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), s.x),
+                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), s.x), s.y);
+    }
     void main() {
-      float x = a_data.x, z = a_data.y, f = a_data.z, glt = a_data.w;
+      vec2 p = a_data.xy;
+      float f = a_data.z;
+      // domain warp: bend the ripple field with slow noise so crests wander instead of tiling
+      vec2 w1 = vec2(vnoise(p * 2.5 + u_warp.xy), vnoise(p * 2.5 + vec2(5.2, 1.3) + u_warp.zw)) - 0.5;
+      vec2 w2 = vec2(vnoise(p * 7.0 - u_warp.zw), vnoise(p * 7.0 + vec2(2.7, 8.1) - u_warp.xy)) - 0.5;
+      vec2 q = p + w1 * 0.16 + w2 * 0.05;
       float gx = 0.0, gz = 0.0;
-      for (int j = 0; j < 6; j++) {
-        float c = cos(u_wave[j].x * x + u_wave[j].y * z - u_wave[j].z);
+      for (int j = 0; j < 12; j++) {
+        float c = cos(u_wave[j].x * q.x + u_wave[j].y * q.y - u_wave[j].z);
         gx += u_amp[j].x * c;
         gz += u_amp[j].y * c;
       }
-      float k = u_gust.x, sx = u_gust.z;
-      float g = sin(x * k * sx + z * k * 0.7 - u_gph.x) *
-                sin(x * k * 0.6 * sx - z * k * 1.3 + u_gph.y + 2.0);
-      float env = 1.0 - u_gust.y + u_gust.y * 0.5 * (1.0 + g);
+      // wind patches: two octaves of drifting noise, pushed toward clear rough/calm areas
+      vec2 gp = p * u_gust.x;
+      float g = vnoise(gp + u_gph) * 0.65 + vnoise(gp * 2.3 + u_gph * 1.7 + 9.1) * 0.35;
+      g = smoothstep(0.2, 0.8, g);
+      float env = 1.0 - u_gust.y + u_gust.y * g;
       float v = (gx * u_light.x + gz * u_light.y) * env * 2.4;
+      // ragged, shifting edges on the sun column
+      float glt = a_data.w * (0.55 + 0.9 * vnoise(vec2(p.x * 1.8, p.y * 0.9) + u_gph * 0.6));
       float r1 = hash(vec2(a_misc.y, u_frame));
       float r2 = hash(vec2(a_misc.y + 7.13, u_frame));
       float thr = u_tune.x + 0.15 - 0.7 * f - glt + r1 * 0.1;
@@ -142,16 +173,10 @@ canvas {
     varying vec4 v_col;
     void main() { gl_FragColor = v_col; }`;
 
-  const TAU = Math.PI * 2;
   const hexRGB = s => { const n = parseInt(s.replace('#', ''), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
   const cv = document.getElementById('water');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-  const sumA = P.waves.reduce((s, v) => s + v[3], 0);
-  const wv = P.waves.map(([d, k, c, a], i) => ({
-    kx: k * Math.cos(d), kz: k * Math.sin(d), w: k * c,
-    ax: (a / sumA) * Math.cos(d), az: (a / sumA) * Math.sin(d), ph: i * 2.1
-  }));
-  const waveU = new Float32Array(24);
+  const waveU = new Float32Array(NW * 4), ampU = new Float32Array(NW * 2);
   let gl, u, attrs, buf, n = 0, W = 0, H = 0, dpr = 1, t = Math.random() * 40, last = 0, ok = false;
 
   function init() {
@@ -171,14 +196,11 @@ canvas {
       if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
       gl.useProgram(pr);
       u = {};
-      ['u_res', 'u_dpr', 'u_frame', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_light', 'u_tune', 'u_on', 'u_foam']
+      ['u_res', 'u_dpr', 'u_frame', 'u_wave', 'u_amp', 'u_gust', 'u_gph', 'u_warp', 'u_light', 'u_tune', 'u_on', 'u_foam']
         .forEach(name => { u[name] = gl.getUniformLocation(pr, name); });
       attrs = ['a_pos', 'a_data', 'a_misc'].map(name => gl.getAttribLocation(pr, name));
       buf = gl.createBuffer();
-      const amp = new Float32Array(12);
-      wv.forEach((v, i) => { amp[i * 2] = v.ax; amp[i * 2 + 1] = v.az; });
-      gl.uniform2fv(u.u_amp, amp);
-      gl.uniform3f(u.u_gust, P.gust.k, P.gust.depth, P.gust.sx || 1);
+      gl.uniform2f(u.u_gust, P.gust.k, P.gust.depth);
       const ll = Math.hypot(P.light[0], P.light[1]);
       gl.uniform2f(u.u_light, P.light[0] / ll, P.light[1] / ll);
       gl.uniform2f(u.u_tune, P.glint, P.contrast);
@@ -234,9 +256,15 @@ canvas {
     // wrap phases on the CPU so precision never drifts on long visits
     wv.forEach((v, j) => {
       waveU[j * 4] = v.kx; waveU[j * 4 + 1] = v.kz; waveU[j * 4 + 2] = (v.w * t - v.ph) % TAU;
+      const m = MOD0 + MOD1 * Math.sin(t * v.mf + v.mp);
+      ampU[j * 2] = v.ax * m; ampU[j * 2 + 1] = v.az * m;
     });
     gl.uniform4fv(u.u_wave, waveU);
-    gl.uniform2f(u.u_gph, (t * P.gust.w) % TAU, (t * P.gust.w * 0.8) % TAU);
+    gl.uniform2fv(u.u_amp, ampU);
+    // noise offsets drift slowly with the wind; wrapped far out so precision holds on long visits
+    const tw = t % 20000;
+    gl.uniform2f(u.u_gph, tw * 0.06, tw * 0.035);
+    gl.uniform4f(u.u_warp, tw * 0.02, -tw * 0.015, tw * 0.017, tw * 0.022);
     gl.uniform2f(u.u_res, W, H);
     gl.uniform1f(u.u_dpr, dpr);
     gl.uniform1f(u.u_frame, Math.floor(t * 24) % 251);   // flicker stays at 24 Hz at any frame rate
