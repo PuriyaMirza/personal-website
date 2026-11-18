@@ -9,195 +9,129 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;1,300&family=Jost:wght@300;400&display=swap">
 <style>
-/* Layout: dark almanac — a thin month spine on a 12-column field of hairlines; projects hang off their month at varied sizes. Single dark look by design (matches Figma option G). */
+/* Almanac, topic edition (Figma: "Portfolio Home · G — Almanac + Travel Translator").
+   Dark ground, hairline column field with the live site's pulse, projects grouped by topic on a spine. */
 :root {
-  --ink: #191a18;        /* page ground */
-  --paper: #f6f3ee;      /* primary text, line color */
-  --stone: #a39b8c;      /* secondary text */
-  --brass: #a8845a;      /* month markers, small labels */
-  --well: #37342e;       /* photo placeholder */
-  --line-a: 0.04;        /* resting line opacity */
-  --hi: 0.28;            /* pulse peak (matches live site) */
+  --ink: #191a18; --paper: #f6f3ee; --stone: #a39b8c; --brass: #a8845a; --frame-line: #5b5d58;
+  --line-a: 0.04;   /* resting line opacity (live site) */
+  --hi: 0.28;       /* pulse peak (live site) */
+  --lines: 18;
+  --spine-f: 0.08333;  /* spine on the first column line, as in Figma */
   --display: "Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --body: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
-  --cols: 12;
-  --spine: 1;
-  --lines: 18;          /* background lines: 1.5x the layout columns */
-  --spine-f: 0.11111;   /* spine sits on line 2 of 18 */
   color-scheme: dark;
 }
-@media (max-width: 999px) { :root { --cols: 6; --spine: 0; --lines: 9; --spine-f: 0; } }
-@media (max-width: 599px) { :root { --cols: 4; --lines: 6; } }
+@media (max-width: 999px) { :root { --lines: 9; --spine-f: 0; } }
+@media (max-width: 599px) { :root { --lines: 6; } }
 
-html { background: var(--ink); }
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--ink); scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body {
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--body);
-  font-weight: 300;
-  font-size: 16px;
-  line-height: 1.6;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 0;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
+  margin: 0; background: var(--ink); color: var(--paper);
+  font-family: var(--body); font-weight: 300; font-size: 16px; line-height: 1.6;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden; -webkit-font-smoothing: antialiased;
 }
 .frame { max-width: 1360px; margin-inline: auto; position: relative; z-index: 1; }
+a { color: inherit; }
+a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
+.cap { font-weight: 400; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+.hello { color: var(--brass); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 
-/* Background column lines */
+/* Background column lines (unchanged from the live site) */
 .lines { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
 .line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246, 243, 238, var(--line-a)); }
 .line i {
-  position: absolute; left: 0; width: 1px; height: 70vh; min-height: 420px; top: 0;
+  position: absolute; left: 0; top: 0; width: 1px; height: 70vh; min-height: 420px;
   opacity: 0; will-change: opacity, transform;
   background: linear-gradient(to bottom,
-    rgba(246,243,238,0) 0%,
-    rgba(246,243,238,calc(var(--hi) * 0.06)) 14%,
-    rgba(246,243,238,calc(var(--hi) * 0.28)) 28%,
-    rgba(246,243,238,calc(var(--hi) * 0.72)) 40%,
-    rgba(246,243,238,var(--hi)) 50%,
-    rgba(246,243,238,calc(var(--hi) * 0.72)) 60%,
-    rgba(246,243,238,calc(var(--hi) * 0.28)) 72%,
-    rgba(246,243,238,calc(var(--hi) * 0.06)) 86%,
+    rgba(246,243,238,0) 0%, rgba(246,243,238,calc(var(--hi) * 0.06)) 14%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 28%, rgba(246,243,238,calc(var(--hi) * 0.72)) 40%,
+    rgba(246,243,238,var(--hi)) 50%, rgba(246,243,238,calc(var(--hi) * 0.72)) 60%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 72%, rgba(246,243,238,calc(var(--hi) * 0.06)) 86%,
     rgba(246,243,238,0) 100%);
 }
 
-/* Type */
-.cap { font-family: var(--body); font-weight: 400; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
-a { color: inherit; }
-a:focus-visible, button:focus-visible, input:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
-
 /* Header */
-.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding-block: 34px 26px; border-bottom: 1px solid rgba(246,243,238,0.15); }
+.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin-inline: 40px; padding-block: 34px 26px; border-bottom: 1px solid rgba(246,243,238,0.15); }
 .logo { font-family: var(--display); font-weight: 300; font-size: 28px; line-height: 1; text-decoration: none; }
-.tag { color: var(--stone); }
-.nav { justify-self: end; display: flex; gap: 32px; }
+.tag { color: var(--stone); font-weight: 300; font-size: 13px; letter-spacing: 0.12em; }
+.nav { justify-self: end; display: flex; gap: 32px; font-weight: 300; font-size: 13px; letter-spacing: 0.12em; }
 .nav a { text-decoration: none; }
 .nav a:hover { color: var(--brass); }
-@media (max-width: 599px) { .top { grid-template-columns: 1fr auto; } .tag { display: none; } .nav { gap: 20px; } }
 
 /* Intro */
-.intro { display: grid; grid-template-columns: repeat(var(--cols), 1fr); padding-block: 64px 120px; gap: 24px 0; }
-.intro h1 { grid-column: 1 / 9; margin: 0; font-family: var(--display); font-weight: 300; font-size: clamp(52px, 7.2vw, 104px); line-height: 0.95; letter-spacing: -0.01em; text-wrap: balance; }
-.intro .note { grid-column: 10 / 13; align-self: start; padding-top: 18px; max-width: 34ch; }
+.intro { display: flex; justify-content: space-between; gap: 40px; margin-inline: 40px; padding-block: 60px 160px; }
+.intro h1 { margin: 0; max-width: 900px; font-family: var(--display); font-weight: 300; font-size: clamp(52px, 6.7vw, 96px); line-height: 0.95; }
+.intro .note { flex: 0 0 300px; padding-top: 30px; }
 .intro .note p { margin: 8px 0 0; color: var(--stone); }
-.hello { color: var(--brass); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
-@media (max-width: 999px) { .intro { padding-block: 48px 72px; } .intro h1, .intro .note { grid-column: 1 / -1; } .intro .note { padding-top: 0; } }
 
-/* Timeline */
-.tl { position: relative; padding-bottom: 80px; }
-.tl::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246,243,238,0.22);
-  left: calc(100% * var(--spine-f)); }
-.month { position: relative; display: grid; grid-template-columns: repeat(var(--cols), 1fr); padding-top: 40px; }
-.month + .month { margin-top: 120px; }
-.mnum { position: absolute; top: 72px; left: calc(100% * var(--spine-f) - 108px); width: 92px; text-align: right; color: var(--brass); font-variant-numeric: tabular-nums; }
-.dot { position: absolute; top: 76px; left: calc(100% * var(--spine-f) - 5px); width: 11px; height: 11px; border-radius: 50%; background: var(--brass); }
-.ghost { grid-column: 3 / 12; margin: 0; font-family: var(--display); font-style: italic; font-weight: 300; font-size: clamp(76px, 12.5vw, 180px); line-height: 1; color: var(--paper); opacity: 0.11; pointer-events: none; user-select: none; }
-.month.later .ghost { opacity: 0.05; }
+/* Timeline of topics */
+.tl { position: relative; padding-bottom: 60px; }
+.tl::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246,243,238,0.2); left: calc(100% * var(--spine-f)); }
+.topic { position: relative; padding-top: 0; }
+.topic + .topic { margin-top: 170px; }
+.ghost { margin: 0 0 0 38%; font-family: var(--display); font-style: italic; font-weight: 300; font-size: 100px; line-height: 1.2; color: var(--paper); opacity: 0.05; user-select: none; }
+.tlabel { position: absolute; top: 52px; left: calc(100% * var(--spine-f) - 121px); width: 96px; text-align: right; color: var(--brass); }
+.dot { position: absolute; top: 55px; left: calc(100% * var(--spine-f) - 5px); width: 11px; height: 11px; border-radius: 50%; background: var(--brass); }
 
-.entry { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--cols), 1fr); align-items: start; column-gap: 0; row-gap: 28px; margin-top: 56px; }
-.ph { margin: 0; background: var(--well); overflow: hidden; max-width: 100%; }
-.ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.text { display: grid; gap: 12px; justify-items: start; padding-right: 24px; min-width: 0; }
+.entry { display: grid; align-items: start; margin-top: 60px; }
+.entry + .entry { margin-top: 155px; }
+.shots { display: flex; gap: 23px; align-items: flex-start; }
+.shot { margin: 0; flex: 1 1 0; min-width: 0; }
+.shot img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--frame-line); }
+.shot + .shot { margin-top: 51px; }   /* same size, slight vertical offset */
+.shots.single .shot.photo img { aspect-ratio: 425 / 487; object-fit: cover; }
+
+.text { display: grid; gap: 20px; justify-items: start; min-width: 0; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .chip { display: inline-block; padding: 5px 12px; border: 1px solid rgba(246,243,238,0.45); border-radius: 999px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 400; line-height: 1.2; }
-.text h2 { margin: 8px 0 0; font-family: var(--display); font-weight: 300; font-size: clamp(34px, 3.4vw, 48px); line-height: 1; text-wrap: balance; }
-.text p { margin: 0; color: var(--stone); font-size: 15px; max-width: 38ch; }
-.links { display: flex; gap: 14px; align-items: baseline; font-weight: 400; font-size: 13px; letter-spacing: 0.04em; }
+.chip.live { border-color: var(--brass); color: var(--brass); }
+.meta .stack { color: var(--stone); font-size: 11px; }
+.text h3 { margin: 0; font-family: var(--display); font-weight: 300; font-size: clamp(34px, 3.4vw, 48px); line-height: 1; text-wrap: balance; }
+.lede { margin: 0; color: var(--stone); font-size: 16px; line-height: 1.65; max-width: 44ch; }
+.pd { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; padding-top: 20px; border-top: 1px solid rgba(246,243,238,0.15); }
+.pd p, .built p { margin: 8px 0 0; font-size: 15px; }
+.built p.cap { color: var(--stone); font-size: 11px; font-weight: 300; letter-spacing: 0.1em; line-height: 1.7; }
+.links { display: flex; gap: 10px; align-items: baseline; font-weight: 400; font-size: 13px; letter-spacing: 0.04em; }
 .links a { text-underline-offset: 3px; }
 .links a:hover { color: var(--brass); }
 .links span { color: var(--stone); }
 
-/* Wide placements (12 columns) */
+/* Desktop placements, proportional to the 1360px Figma frame */
 @media (min-width: 1000px) {
-  .weather .ph { grid-column: 8 / 13; grid-row: 1; aspect-ratio: 600 / 400; margin-top: -150px; }
-  .weather .text { grid-column: 3 / 8; grid-row: 1; padding-top: 40px; }
-  .amtrak .ph { grid-column: 3 / 6; grid-row: 1; aspect-ratio: 340 / 440; margin-top: 40px; }
-  .amtrak .text { grid-column: 7 / 11; grid-row: 1; align-self: center; padding-top: 80px; }
-  .landing .ph { grid-column: 9 / 13; grid-row: 1; aspect-ratio: 360 / 520; margin-top: 40px; }
-  .landing .text { padding-top: 120px !important; }
-  .landing .text { grid-column: 3 / 7; grid-row: 1; padding-top: 40px; }
-  .bird .ph.main { grid-column: 3 / 7; grid-row: 1 / span 2; aspect-ratio: 1; }
-  .bird .text { grid-column: 8 / 12; grid-row: 1; padding-top: 20px; padding-left: 0; }
-  .bird .note-ph { grid-column: 8 / 10; grid-row: 2; align-self: end; }
-  .next { grid-column: 3 / 6; }
+  .entry { grid-template-columns: 162fr 425fr 48fr 620fr 105fr; }
+  .entry .shots { grid-column: 2; grid-row: 1; }
+  .entry .text { grid-column: 4; grid-row: 1; padding-top: 26px; }
+  .entry.flip { grid-template-columns: 152fr 620fr 55fr 425fr 108fr; }
+  .entry.flip .text { grid-column: 2; }
+  .entry.flip .shots { grid-column: 4; }
 }
-/* Narrow: stacked to the right of the spine */
+/* Narrow: stacked beside the spine */
 @media (max-width: 999px) {
-  .ghost { grid-column: 1 / -1; padding-left: 28px; }
-  .mnum { position: static; grid-column: 1 / -1; order: -1; text-align: left; width: auto; padding-left: 28px; margin-bottom: 4px; }
-  .dot { top: 46px; }
-  .entry { margin-top: 32px; padding-left: 28px; row-gap: 20px; }
-  .entry + .entry { margin-top: 72px; }
-  .entry > * { grid-column: 1 / -1; }
-  .weather .ph { aspect-ratio: 4 / 3; }
-  .amtrak .ph { aspect-ratio: 3 / 4; max-width: 420px; }
-  .landing .ph { aspect-ratio: 3 / 4; max-width: 420px; }
-  .bird .ph.main { aspect-ratio: 1; }
-  .bird .note-ph { max-width: 260px; }
-  .next { grid-column: 1 / -1; margin-left: 28px; }
-  .month + .month { margin-top: 72px; }
-}
-.ph.sq img { object-position: 58% 50%; }
-.note-ph figure { margin: 0; }
-.note-ph .ph { aspect-ratio: 240 / 160; }
-.note-ph .ph img { filter: grayscale(1) contrast(1.05); }
-.note-ph figcaption { margin-top: 10px; color: var(--stone); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
-.next { margin-top: 40px; height: 150px; display: grid; place-items: center; border: 1px dashed rgba(246,243,238,0.35); color: var(--stone); }
-
-/* Footer */
-.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; padding-block: 28px 48px; border-top: 1px solid rgba(246,243,238,0.15); }
-.foot .copy { color: var(--stone); }
-
-*, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; }
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-.soon { color: var(--stone); }
-
-/* Status chip: Live uses the brass accent (design system) */
-.chip.live { border-color: var(--brass); color: var(--brass); }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.meta .stack { color: var(--stone); font-size: 11px; letter-spacing: 0.14em; }
-
-/* Featured entry: Travel Translator */
-.translator .ph { background: none; aspect-ratio: 794 / 1700; max-width: 300px; }
-.translator .ph img { object-fit: contain; }
-.translator .text { gap: 20px; padding-right: 0; }
-.translator .lede { font-size: 16px; line-height: 1.65; max-width: 44ch; }
-.pd { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; padding-top: 20px; border-top: 1px solid rgba(246,243,238,0.15); }
-.pd p, .built p { margin: 8px 0 0; color: var(--paper); font-size: 15px; }
-.built p.cap { color: var(--stone); font-size: 11px; font-weight: 300; letter-spacing: 0.1em; line-height: 1.7; max-width: none; }
-@media (min-width: 1000px) {
-  .translator { margin-top: 120px; }
-  .translator .ph { grid-column: 3 / 6; grid-row: 1; }
-  .translator .text { grid-column: 7 / 13; grid-row: 1; padding-top: 40px; }
-}
-@media (max-width: 999px) {
-  .translator .ph { max-width: 260px; }
+  .top, .intro { margin-inline: 0; }
+  .intro { flex-direction: column; padding-block: 48px 80px; }
+  .intro .note { flex: none; padding-top: 0; max-width: 34ch; }
+  .ghost { margin-left: 28px; font-size: clamp(64px, 16vw, 100px); }
+  .tlabel { position: static; display: block; width: auto; text-align: left; padding-left: 28px; margin-bottom: -8px; }
+  .dot { top: 7px; }
+  .entry { margin-top: 32px; padding-left: 28px; row-gap: 28px; }
+  .entry + .entry { margin-top: 88px; }
+  .shots { max-width: 440px; gap: 16px; }
+  .shot + .shot { margin-top: 40px; }
 }
 @media (max-width: 599px) {
+  .top { grid-template-columns: 1fr auto; } .tag { display: none; } .nav { gap: 20px; }
   .pd { grid-template-columns: 1fr; gap: 20px; }
 }
 
-/* App screenshots: a main phone screen and a smaller second one */
-.shots { display: flex; gap: 24px; align-items: flex-start; margin: 0; }
-.shot { margin: 0; flex: none; }
-.shot img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid rgba(246,243,238,0.12); }
-.shot.main, .shot.sub { width: 250px; }
-.shot.sub { margin-top: 80px; }   /* same size, slight vertical offset */
-@media (min-width: 1000px) {
-  .weather .shots { grid-column: 8 / 13; grid-row: 1; justify-content: flex-end; }
-  .weather .text { grid-column: 3 / 8; padding-top: 120px; }
-  .landing .shots { grid-column: 8 / 13; grid-row: 1; justify-content: flex-end; margin-top: 40px; }
-  .bird .shots { grid-column: 3 / 8; grid-row: 1; }
-  .bird .text { grid-column: 8 / 12; padding-top: 120px; }
-}
-@media (max-width: 999px) {
-  .shots { gap: 16px; }
-  .shot.main, .shot.sub { width: min(calc(50% - 8px), 250px); }
-  .shot.sub { margin-top: 48px; }
-}
+/* Next slot + footer */
+.next { margin: 120px 0 0 calc(100% * var(--spine-f) + 107px); width: 340px; max-width: calc(100% - 28px); height: 150px; display: grid; place-items: center; border: 1px dashed rgba(246,243,238,0.35); color: var(--stone); font-weight: 300; }
+@media (max-width: 999px) { .next { margin-left: 28px; } }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; margin-inline: 40px; padding-block: 28px 48px; border-top: 1px solid rgba(246,243,238,0.15); }
+@media (max-width: 999px) { .foot { margin-inline: 0; } }
+.foot .copy { color: var(--stone); font-weight: 300; }
 </style>
 </head>
 <body>
@@ -208,106 +142,120 @@ html { scroll-behavior: smooth; }
   <header class="top">
     <a class="logo" href="/" id="top">Puriya Mirza</a>
     <span class="cap tag">A working log</span>
-    <nav class="nav cap" aria-label="Main"><a href="#work">Projects</a><a href="#contact">Contact</a></nav>
+    <nav class="nav cap" aria-label="Main"><a href="#about">About</a><a href="#contact">Contact</a></nav>
   </header>
 
-  <section class="intro">
-    <h1>What I’ve been making lately.</h1>
+  <section class="intro" id="about">
+    <h1>What I’ve been building lately.</h1>
     <div class="note">
       <span class="hello">(Hello)</span>
-      <p>Product manager in New York City. These are the small tools I’ve built on the side, in the order I started them.</p>
+      <p>Product manager in New York City. These are the small tools I’ve built on the side, grouped by what they’re for.</p>
     </div>
   </section>
 
   <main class="tl" id="work">
-    <section class="month" aria-labelledby="m-aug">
-      <span class="dot"></span><span class="cap mnum">08 · 26</span>
-      <p class="ghost" id="m-aug">August</p>
-      <article class="entry weather">
-        <div class="shots">
-          <figure class="shot main"><img src="img/weather-1.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard: New York forecast card, current temperature and conditions"></figure>
-          <figure class="shot sub"><img src="img/weather-2.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard in arrange mode, with resizable rain, wind and hourly modules"></figure>
-        </div>
-        <div class="text">
-          <span class="chip live">Live</span>
-          <h2>Weather Dashboard</h2>
-          <p>A customizable weather dashboard: pick the readings you want, arrange them, and check any location with live Open-Meteo data.</p>
-          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://weather-dashboard-one-neon.vercel.app" target="_blank" rel="noopener">Live site</a></div>
-        </div>
-      </article>
-
-      <article class="entry translator">
-        <figure class="ph"><img src="img/translator-app.webp" width="794" height="1700" loading="lazy" alt="Dialog app home screen: a daily phrase card with pronunciation and a grid of travel situations"></figure>
-        <div class="text">
-          <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · Claude&nbsp;API · Neon</span></div>
-          <h2>Situational Travel Translator</h2>
-          <p class="lede">A phrasebook that gives you what a local would actually say — not a word-for-word guess.</p>
-          <div class="pd">
-            <div><span class="hello">(Problem)</span><p>Literal translations sound wrong in real conversations.</p></div>
-            <div><span class="hello">(Decision)</span><p>Claude translates for intent and tone, and anyone can try it without an account.</p></div>
+    <section class="topic" aria-labelledby="t-language">
+      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Language</span>
+      <h2 class="ghost" id="t-language">Language</h2>
+        <article class="entry translator">
+          <div class="shots">
+            <figure class="shot"><img src="img/translator-1.webp" width="640" height="1388" loading="lazy" alt="Dialog onboarding: choose where you are headed and what time of year"></figure>
+            <figure class="shot"><img src="img/translator-2.webp" width="640" height="1384" loading="lazy" alt="Dialog home screen: a daily phrase with pronunciation and a grid of travel situations"></figure>
           </div>
-          <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Claude&nbsp;API · Neon · Vercel · Figma · Claude&nbsp;Code</p></div>
-          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://travel-translator-phi.vercel.app" target="_blank" rel="noopener">Try the app</a></div>
-        </div>
-      </article>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · Claude&nbsp;API · Neon</span></div>
+            <h3>Situational Travel Translator</h3>
+            <p class="lede">A phrasebook that gives you what a local would actually say — not a word-for-word guess.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Literal translations sound wrong in real conversations.</p></div>
+              <div><span class="hello">(Decision)</span><p>Claude translates for intent and tone, and anyone can try it without an account.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Claude&nbsp;API · Neon · Vercel · Figma · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://travel-translator-phi.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
     </section>
-
-    <section class="month" aria-labelledby="m-sep">
-      <span class="dot"></span><span class="cap mnum">09 · 26</span>
-      <p class="ghost" id="m-sep">September</p>
-      <article class="entry amtrak">
-        <figure class="ph"><img src="img/scooter-road.jpg" alt="View from a scooter's handlebars down a winding road through green hills"></figure>
-        <div class="text">
-          <span class="chip live">Live</span>
-          <h2>Amtrak Explorer</h2>
-          <p>Find affordable Amtrak trips out of Penn Station by asking in plain English.</p>
-          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://amtrak-explorer.vercel.app" target="_blank" rel="noopener">Live site</a></div>
-        </div>
-      </article>
-      <article class="entry landing">
-        <div class="shots">
-          <figure class="shot main"><img src="img/landing-1.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist start screen: enter a flight number to get a plan to the curb"></figure>
-          <figure class="shot sub"><img src="img/landing-2.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist for flight BA178: arrival weather and the stages from taxi to transport"></figure>
-        </div>
-        <div class="text">
-          <span class="chip live">Live</span>
-          <h2>Landing Checklist</h2>
-          <p>A stage-by-stage plan from Heathrow landing to the curb, built from your flight number and saved for offline use.</p>
-          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://landing-checklist.vercel.app" target="_blank" rel="noopener">Live site</a></div>
-        </div>
-      </article>
+    <section class="topic" aria-labelledby="t-travel">
+      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Travel</span>
+      <h2 class="ghost" id="t-travel">Travel</h2>
+        <article class="entry landing flip">
+          <div class="shots">
+            <figure class="shot"><img src="img/landing-1.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist start screen: enter a flight number to get a plan to the curb"></figure>
+            <figure class="shot"><img src="img/landing-2.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist for flight BA178: arrival weather and the stages from taxi to transport"></figure>
+          </div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · Aviationstack · Open-Meteo</span></div>
+            <h3>Landing Checklist</h3>
+            <p class="lede">Enter a flight number and get a stage-by-stage plan from wheels-down at Heathrow to the curb.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Right after landing you often have no data and no idea how long the next hour will take.</p></div>
+              <div><span class="hello">(Decision)</span><p>A timeline instead of a dashboard, saved for offline use, with every estimate labelled by how sure it is.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Zod · Serwist · IndexedDB · Aviationstack · Open‑Meteo · Vercel · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://landing-checklist.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
+        <article class="entry amtrak">
+          <div class="shots single"><figure class="shot photo"><img src="img/scooter-road.jpg" loading="lazy" alt="View from a scooter's handlebars down a winding road through green hills"></figure></div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Neon · Claude&nbsp;API · Amtrak&nbsp;GTFS</span></div>
+            <h3>Amtrak Explorer</h3>
+            <p class="lede">Browse Amtrak stations and routes, and ask schedule questions in plain English.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Train schedules are hard to search the way people actually plan a trip.</p></div>
+              <div><span class="hello">(Decision)</span><p>Claude answers through three fixed database queries, so it never writes its own SQL.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">HTML/CSS/JS · Neon&nbsp;(Postgres) · SQL · Claude&nbsp;API · Vercel&nbsp;Functions · Amtrak&nbsp;GTFS · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://amtrak-explorer.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
     </section>
-
-    <section class="month" aria-labelledby="m-oct">
-      <span class="dot"></span><span class="cap mnum">10 · 26</span>
-      <p class="ghost" id="m-oct">October</p>
-      <article class="entry bird">
-        <div class="shots">
-          <figure class="shot main"><img src="img/bird-1.webp" width="640" height="1309" loading="lazy" alt="Bird Tracker: a Pine Warbler sighting reported at Harlem Meer in Central Park"></figure>
-          <figure class="shot sub"><img src="img/bird-2.webp" width="640" height="1309" loading="lazy" alt="Bird Tracker log: life list totals and recent outings"></figure>
-        </div>
-        <div class="text">
-          <span class="chip live">Live</span>
-          <h2>Bird Tracker</h2>
-          <p>A field companion for birding Central Park: local species, where to find them, and how to tell look-alikes apart.</p>
-          <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://nyc-bird-tracker.vercel.app" target="_blank" rel="noopener">Live site</a></div>
-        </div>
-      </article>
+    <section class="topic" aria-labelledby="t-nature">
+      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Nature</span>
+      <h2 class="ghost" id="t-nature">Nature</h2>
+        <article class="entry weather flip">
+          <div class="shots">
+            <figure class="shot"><img src="img/weather-1.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard: New York forecast card, current temperature and conditions"></figure>
+            <figure class="shot"><img src="img/weather-2.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard in arrange mode, with resizable rain, wind and hourly modules"></figure>
+          </div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · Open-Meteo · Zustand</span></div>
+            <h3>Custom Weather Dashboard</h3>
+            <p class="lede">Your weather, showing only what you actually care about.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Weather apps show everyone the same screen, whether they cycle, garden or commute.</p></div>
+              <div><span class="hello">(Decision)</span><p>Every card can be added, removed, resized and reordered, with tap controls as well as drag.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Zustand · dnd‑kit · Recharts · Zod · Open‑Meteo · Vitest · Playwright · Vercel · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://weather-dashboard-one-neon.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
+        <article class="entry bird">
+          <div class="shots">
+            <figure class="shot"><img src="img/bird-1.webp" width="640" height="1275" loading="lazy" alt="Bird Tracker: a Pine Warbler sighting reported at Harlem Meer in Central Park"></figure>
+            <figure class="shot"><img src="img/bird-2.webp" width="640" height="1275" loading="lazy" alt="Bird Tracker log: life list totals and recent outings"></figure>
+          </div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · eBird&nbsp;API · Claude&nbsp;API</span></div>
+            <h3>Personal Bird Tracker</h3>
+            <p class="lede">A field companion for birding Central Park: what has been seen lately, how to tell look-alikes apart, and a log of your walks.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Beginner birders see something and can’t put a name to it.</p></div>
+              <div><span class="hello">(Decision)</span><p>Identify by color, size and place, or from a photo with Claude, and keep your log on your own device.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Zustand · Zod · Claude&nbsp;API · eBird&nbsp;API · Wikimedia&nbsp;Commons · Vercel · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://nyc-bird-tracker.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
     </section>
-
-    <section class="month later" aria-labelledby="m-nov">
-      <span class="dot"></span><span class="cap mnum">11 · 26</span>
-      <p class="ghost" id="m-nov">November</p>
-      <div class="next cap">Next, soon</div>
-    </section>
+    <div class="next cap">Next, soon</div>
   </main>
 
   <footer class="foot cap" id="contact">
-    <span><a href="mailto:contact@puriyamirza.com">contact@puriyamirza.com</a> · <a href="https://github.com/PuriyaMirza" target="_blank" rel="noopener">GitHub</a></span>
+    <span><a href="mailto:contact@puriyamirza.com">Email</a> · <a href="https://github.com/PuriyaMirza" target="_blank" rel="noopener">GitHub</a></span>
     <span class="copy">© 2026 Puriya Mirza</span>
   </footer>
 </div>
-
 
 <script>
 (() => {
