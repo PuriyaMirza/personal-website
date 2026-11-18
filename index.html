@@ -179,6 +179,25 @@ html { scroll-behavior: smooth; }
 @media (max-width: 599px) {
   .pd { grid-template-columns: 1fr; gap: 20px; }
 }
+
+/* App screenshots: a main phone screen and a smaller second one */
+.shots { display: flex; gap: 24px; align-items: flex-start; margin: 0; }
+.shot { margin: 0; flex: none; }
+.shot img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid rgba(246,243,238,0.12); }
+.shot.main { width: 300px; }
+.shot.sub { width: 190px; margin-top: 140px; }
+@media (min-width: 1000px) {
+  .weather .shots { grid-column: 8 / 13; grid-row: 1; justify-content: flex-end; }
+  .weather .text { grid-column: 3 / 8; padding-top: 120px; }
+  .landing .shots { grid-column: 8 / 13; grid-row: 1; justify-content: flex-end; margin-top: 40px; }
+  .bird .shots { grid-column: 3 / 8; grid-row: 1; }
+  .bird .text { grid-column: 8 / 12; padding-top: 120px; }
+}
+@media (max-width: 999px) {
+  .shots { gap: 16px; }
+  .shot.main { width: min(60%, 300px); }
+  .shot.sub { width: min(36%, 190px); margin-top: 80px; }
+}
 </style>
 </head>
 <body>
@@ -205,7 +224,10 @@ html { scroll-behavior: smooth; }
       <span class="dot"></span><span class="cap mnum">08 · 26</span>
       <p class="ghost" id="m-aug">August</p>
       <article class="entry weather">
-        <figure class="ph"><img src="img/coast.jpg" alt="Coastline with green cliffs and turquoise water under a cloudy sky"></figure>
+        <div class="shots">
+          <figure class="shot main"><img src="img/weather-1.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard: New York forecast card, current temperature and conditions"></figure>
+          <figure class="shot sub"><img src="img/weather-2.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard in arrange mode, with resizable rain, wind and hourly modules"></figure>
+        </div>
         <div class="text">
           <span class="chip live">Live</span>
           <h2>Weather Dashboard</h2>
@@ -243,7 +265,10 @@ html { scroll-behavior: smooth; }
         </div>
       </article>
       <article class="entry landing">
-        <figure class="ph"><img src="img/window-city.jpg" alt="City rooftops and a temple spire seen through a window"></figure>
+        <div class="shots">
+          <figure class="shot main"><img src="img/landing-1.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist start screen: enter a flight number to get a plan to the curb"></figure>
+          <figure class="shot sub"><img src="img/landing-2.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist for flight BA178: arrival weather and the stages from taxi to transport"></figure>
+        </div>
         <div class="text">
           <span class="chip live">Live</span>
           <h2>Landing Checklist</h2>
@@ -257,18 +282,15 @@ html { scroll-behavior: smooth; }
       <span class="dot"></span><span class="cap mnum">10 · 26</span>
       <p class="ghost" id="m-oct">October</p>
       <article class="entry bird">
-        <figure class="ph main sq"><img src="img/sparrow.jpg" alt="House sparrow perched on a stone ledge"></figure>
+        <div class="shots">
+          <figure class="shot main"><img src="img/bird-1.webp" width="640" height="1309" loading="lazy" alt="Bird Tracker: a Pine Warbler sighting reported at Harlem Meer in Central Park"></figure>
+          <figure class="shot sub"><img src="img/bird-2.webp" width="640" height="1309" loading="lazy" alt="Bird Tracker log: life list totals and recent outings"></figure>
+        </div>
         <div class="text">
           <span class="chip live">Live</span>
           <h2>Bird Tracker</h2>
           <p>A field companion for birding Central Park: local species, where to find them, and how to tell look-alikes apart.</p>
           <div class="links"><span class="soon">Case study soon</span><span>·</span><a href="https://nyc-bird-tracker.vercel.app" target="_blank" rel="noopener">Live site</a></div>
-        </div>
-        <div class="note-ph">
-          <figure>
-            <div class="ph"><img src="img/woodpecker.jpg" alt="Downy woodpecker on a tree trunk, in black and white"></div>
-            <figcaption>Field note: downy woodpecker</figcaption>
-          </figure>
         </div>
       </article>
     </section>
