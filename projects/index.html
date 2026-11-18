@@ -110,6 +110,11 @@ a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
   .entry.flip .text { grid-column: 2; }
   .entry.flip .shots { grid-column: 4; }
 }
+/* Mid-width desktops: not enough room left of the spine, so the topic label sits above the ghost word */
+@media (min-width: 1000px) and (max-width: 1399px) {
+  .tlabel { position: static; display: block; width: auto; text-align: left; padding-left: calc(100% * var(--spine-f) + 24px); margin-bottom: -8px; }
+  .dot { top: 7px; }
+}
 /* Narrow: stacked beside the spine */
 @media (max-width: 999px) {
   .top, .intro { margin-inline: 0; }
