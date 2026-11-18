@@ -184,8 +184,8 @@ html { scroll-behavior: smooth; }
 .shots { display: flex; gap: 24px; align-items: flex-start; margin: 0; }
 .shot { margin: 0; flex: none; }
 .shot img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid rgba(246,243,238,0.12); }
-.shot.main { width: 300px; }
-.shot.sub { width: 190px; margin-top: 140px; }
+.shot.main, .shot.sub { width: 250px; }
+.shot.sub { margin-top: 80px; }   /* same size, slight vertical offset */
 @media (min-width: 1000px) {
   .weather .shots { grid-column: 8 / 13; grid-row: 1; justify-content: flex-end; }
   .weather .text { grid-column: 3 / 8; padding-top: 120px; }
@@ -195,8 +195,8 @@ html { scroll-behavior: smooth; }
 }
 @media (max-width: 999px) {
   .shots { gap: 16px; }
-  .shot.main { width: min(60%, 300px); }
-  .shot.sub { width: min(36%, 190px); margin-top: 80px; }
+  .shot.main, .shot.sub { width: min(calc(50% - 8px), 250px); }
+  .shot.sub { margin-top: 48px; }
 }
 </style>
 </head>
