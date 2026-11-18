@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puriya Mirza</title>
+<meta name="description" content="Puriya Mirza, product manager in New York City. A working log of small tools built on the side.">
+<link rel="canonical" href="https://puriyamirza.com/projects">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;1,300&family=Jost:wght@300;400&display=swap">
+<style>
+/* Almanac, topic edition (Figma: "Portfolio Home · G — Almanac + Travel Translator").
+   Dark ground, hairline column field with the live site's pulse, projects grouped by topic on a spine. */
+:root {
+  --ink: #191a18; --paper: #f6f3ee; --stone: #a39b8c; --brass: #a8845a; --frame-line: #5b5d58;
+  --line-a: 0.04;   /* resting line opacity (live site) */
+  --hi: 0.28;       /* pulse peak (live site) */
+  --lines: 18;
+  --spine-f: 0.08333;  /* spine on the first column line, as in Figma */
+  --display: "Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+@media (max-width: 999px) { :root { --lines: 9; --spine-f: 0; } }
+@media (max-width: 599px) { :root { --lines: 6; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--ink); scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--ink); color: var(--paper);
+  font-family: var(--body); font-weight: 300; font-size: 16px; line-height: 1.6;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden; -webkit-font-smoothing: antialiased;
+}
+.frame { max-width: 1360px; margin-inline: auto; position: relative; z-index: 1; }
+a { color: inherit; }
+a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
+.cap { font-weight: 400; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+.hello { color: var(--brass); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Background column lines (unchanged from the live site) */
+.lines { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246, 243, 238, var(--line-a)); }
+.line i {
+  position: absolute; left: 0; top: 0; width: 1px; height: 70vh; min-height: 420px;
+  opacity: 0; will-change: opacity, transform;
+  background: linear-gradient(to bottom,
+    rgba(246,243,238,0) 0%, rgba(246,243,238,calc(var(--hi) * 0.06)) 14%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 28%, rgba(246,243,238,calc(var(--hi) * 0.72)) 40%,
+    rgba(246,243,238,var(--hi)) 50%, rgba(246,243,238,calc(var(--hi) * 0.72)) 60%,
+    rgba(246,243,238,calc(var(--hi) * 0.28)) 72%, rgba(246,243,238,calc(var(--hi) * 0.06)) 86%,
+    rgba(246,243,238,0) 100%);
+}
+
+/* Header */
+.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin-inline: 40px; padding-block: 34px 26px; border-bottom: 1px solid rgba(246,243,238,0.15); }
+.logo { font-family: var(--display); font-weight: 300; font-size: 28px; line-height: 1; text-decoration: none; }
+.tag { color: var(--stone); font-weight: 300; font-size: 13px; letter-spacing: 0.12em; }
+.nav { justify-self: end; display: flex; gap: 32px; font-weight: 300; font-size: 13px; letter-spacing: 0.12em; }
+.nav a { text-decoration: none; }
+.nav a:hover { color: var(--brass); }
+
+/* Intro */
+.intro { display: flex; justify-content: space-between; gap: 40px; margin-inline: 40px; padding-block: 60px 160px; }
+.intro h1 { margin: 0; max-width: 900px; font-family: var(--display); font-weight: 300; font-size: clamp(52px, 6.7vw, 96px); line-height: 0.95; }
+.intro .note { flex: 0 0 300px; padding-top: 30px; }
+.intro .note p { margin: 8px 0 0; color: var(--stone); }
+
+/* Timeline of topics */
+.tl { position: relative; padding-bottom: 60px; }
+.tl::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246,243,238,0.2); left: calc(100% * var(--spine-f)); }
+.topic { position: relative; padding-top: 0; }
+.topic + .topic { margin-top: 170px; }
+.ghost { margin: 0 0 0 38%; font-family: var(--display); font-style: italic; font-weight: 300; font-size: 100px; line-height: 1.2; color: var(--paper); opacity: 0.05; user-select: none; }
+.tlabel { position: absolute; top: 52px; left: calc(100% * var(--spine-f) - 121px); width: 96px; text-align: right; color: var(--brass); }
+.dot { position: absolute; top: 55px; left: calc(100% * var(--spine-f) - 5px); width: 11px; height: 11px; border-radius: 50%; background: var(--brass); }
+
+.entry { display: grid; align-items: start; margin-top: 60px; }
+.entry + .entry { margin-top: 155px; }
+.shots { display: flex; gap: 23px; align-items: flex-start; }
+.shot { margin: 0; flex: 1 1 0; min-width: 0; }
+.shot img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--frame-line); }
+.shot + .shot { margin-top: 51px; }   /* same size, slight vertical offset */
+.shots.single .shot.photo img { aspect-ratio: 425 / 487; object-fit: cover; }
+
+.text { display: grid; gap: 20px; justify-items: start; min-width: 0; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.chip { display: inline-block; padding: 5px 12px; border: 1px solid rgba(246,243,238,0.45); border-radius: 999px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 400; line-height: 1.2; }
+.chip.live { border-color: var(--brass); color: var(--brass); }
+.meta .stack { color: var(--stone); font-size: 11px; }
+.text h3 { margin: 0; font-family: var(--display); font-weight: 300; font-size: clamp(34px, 3.4vw, 48px); line-height: 1; text-wrap: balance; }
+.lede { margin: 0; color: var(--stone); font-size: 16px; line-height: 1.65; max-width: 44ch; }
+.pd { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; padding-top: 20px; border-top: 1px solid rgba(246,243,238,0.15); }
+.pd p, .built p { margin: 8px 0 0; font-size: 15px; }
+.built p.cap { color: var(--stone); font-size: 11px; font-weight: 300; letter-spacing: 0.1em; line-height: 1.7; }
+.links { display: flex; gap: 10px; align-items: baseline; font-weight: 400; font-size: 13px; letter-spacing: 0.04em; }
+.links a { text-underline-offset: 3px; }
+.links a:hover { color: var(--brass); }
+.links span { color: var(--stone); }
+
+/* Desktop placements, proportional to the 1360px Figma frame */
+@media (min-width: 1000px) {
+  .entry { grid-template-columns: 162fr 425fr 48fr 620fr 105fr; }
+  .entry .shots { grid-column: 2; grid-row: 1; }
+  .entry .text { grid-column: 4; grid-row: 1; padding-top: 26px; }
+  .entry.flip { grid-template-columns: 152fr 620fr 55fr 425fr 108fr; }
+  .entry.flip .text { grid-column: 2; }
+  .entry.flip .shots { grid-column: 4; }
+}
+/* Narrow: stacked beside the spine */
+@media (max-width: 999px) {
+  .top, .intro { margin-inline: 0; }
+  .intro { flex-direction: column; padding-block: 48px 80px; }
+  .intro .note { flex: none; padding-top: 0; max-width: 34ch; }
+  .ghost { margin-left: 28px; font-size: clamp(64px, 16vw, 100px); }
+  .tlabel { position: static; display: block; width: auto; text-align: left; padding-left: 28px; margin-bottom: -8px; }
+  .dot { top: 7px; }
+  .entry { margin-top: 32px; padding-left: 28px; row-gap: 28px; }
+  .entry + .entry { margin-top: 88px; }
+  .shots { max-width: 440px; gap: 16px; }
+  .shot + .shot { margin-top: 40px; }
+}
+@media (max-width: 599px) {
+  .top { grid-template-columns: 1fr auto; } .tag { display: none; } .nav { gap: 20px; }
+  .pd { grid-template-columns: 1fr; gap: 20px; }
+}
+
+/* Next slot + footer */
+.next { margin: 120px 0 0 calc(100% * var(--spine-f) + 107px); width: 340px; max-width: calc(100% - 28px); height: 150px; display: grid; place-items: center; border: 1px dashed rgba(246,243,238,0.35); color: var(--stone); font-weight: 300; }
+@media (max-width: 999px) { .next { margin-left: 28px; } }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; margin-inline: 40px; padding-block: 28px 48px; border-top: 1px solid rgba(246,243,238,0.15); }
+@media (max-width: 999px) { .foot { margin-inline: 0; } }
+.foot .copy { color: var(--stone); font-weight: 300; }
+</style>
+</head>
+<body>
+
+<div class="lines" id="lines" aria-hidden="true"></div>
+
+<div class="frame">
+  <header class="top">
+    <a class="logo" href="/" id="top">Puriya Mirza</a>
+    <span class="cap tag">A working log</span>
+    <nav class="nav cap" aria-label="Main"><a href="#about">About</a><a href="#contact">Contact</a></nav>
+  </header>
+
+  <section class="intro" id="about">
+    <h1>What I’ve been building lately.</h1>
+    <div class="note">
+      <span class="hello">(Hello)</span>
+      <p>Product manager in New York City. These are the small tools I’ve built on the side, grouped by what they’re for.</p>
+    </div>
+  </section>
+
+  <main class="tl" id="work">
+    <section class="topic" aria-labelledby="t-language">
+      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Language</span>
+      <h2 class="ghost" id="t-language">Language</h2>
+        <article class="entry translator">
+          <div class="shots">
+            <figure class="shot"><img src="/img/translator-1.webp" width="640" height="1388" loading="lazy" alt="Dialog onboarding: choose where you are headed and what time of year"></figure>
+            <figure class="shot"><img src="/img/translator-2.webp" width="640" height="1384" loading="lazy" alt="Dialog home screen: a daily phrase with pronunciation and a grid of travel situations"></figure>
+          </div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · Claude&nbsp;API · Neon</span></div>
+            <h3>Situational Travel Translator</h3>
+            <p class="lede">A phrasebook that gives you what a local would actually say — not a word-for-word guess.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Literal translations sound wrong in real conversations.</p></div>
+              <div><span class="hello">(Decision)</span><p>Claude translates for intent and tone, and anyone can try it without an account.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Claude&nbsp;API · Neon · Vercel · Figma · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://travel-translator-phi.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
+    </section>
+    <section class="topic" aria-labelledby="t-travel">
+      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Travel</span>
+      <h2 class="ghost" id="t-travel">Travel</h2>
+        <article class="entry landing flip">
+          <div class="shots">
+            <figure class="shot"><img src="/img/landing-1.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist start screen: enter a flight number to get a plan to the curb"></figure>
+            <figure class="shot"><img src="/img/landing-2.webp" width="640" height="1309" loading="lazy" alt="Landing Checklist for flight BA178: arrival weather and the stages from taxi to transport"></figure>
+          </div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · Aviationstack · Open-Meteo</span></div>
+            <h3>Landing Checklist</h3>
+            <p class="lede">Enter a flight number and get a stage-by-stage plan from wheels-down at Heathrow to the curb.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Right after landing you often have no data and no idea how long the next hour will take.</p></div>
+              <div><span class="hello">(Decision)</span><p>A timeline instead of a dashboard, saved for offline use, with every estimate labelled by how sure it is.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Zod · Serwist · IndexedDB · Aviationstack · Open‑Meteo · Vercel · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://landing-checklist.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
+        <article class="entry amtrak">
+          <div class="shots single"><figure class="shot photo"><img src="/img/scooter-road.jpg" loading="lazy" alt="View from a scooter's handlebars down a winding road through green hills"></figure></div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Neon · Claude&nbsp;API · Amtrak&nbsp;GTFS</span></div>
+            <h3>Amtrak Explorer</h3>
+            <p class="lede">Browse Amtrak stations and routes, and ask schedule questions in plain English.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Train schedules are hard to search the way people actually plan a trip.</p></div>
+              <div><span class="hello">(Decision)</span><p>Claude answers through three fixed database queries, so it never writes its own SQL.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">HTML/CSS/JS · Neon&nbsp;(Postgres) · SQL · Claude&nbsp;API · Vercel&nbsp;Functions · Amtrak&nbsp;GTFS · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://amtrak-explorer.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
+    </section>
+    <section class="topic" aria-labelledby="t-nature">
+      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Nature</span>
+      <h2 class="ghost" id="t-nature">Nature</h2>
+        <article class="entry weather flip">
+          <div class="shots">
+            <figure class="shot"><img src="/img/weather-1.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard: New York forecast card, current temperature and conditions"></figure>
+            <figure class="shot"><img src="/img/weather-2.webp" width="640" height="1309" loading="lazy" alt="Weather Dashboard in arrange mode, with resizable rain, wind and hourly modules"></figure>
+          </div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · Open-Meteo · Zustand</span></div>
+            <h3>Custom Weather Dashboard</h3>
+            <p class="lede">Your weather, showing only what you actually care about.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Weather apps show everyone the same screen, whether they cycle, garden or commute.</p></div>
+              <div><span class="hello">(Decision)</span><p>Every card can be added, removed, resized and reordered, with tap controls as well as drag.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Zustand · dnd‑kit · Recharts · Zod · Open‑Meteo · Vitest · Playwright · Vercel · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://weather-dashboard-one-neon.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
+        <article class="entry bird">
+          <div class="shots">
+            <figure class="shot"><img src="/img/bird-1.webp" width="640" height="1275" loading="lazy" alt="Bird Tracker: a Pine Warbler sighting reported at Harlem Meer in Central Park"></figure>
+            <figure class="shot"><img src="/img/bird-2.webp" width="640" height="1275" loading="lazy" alt="Bird Tracker log: life list totals and recent outings"></figure>
+          </div>
+          <div class="text">
+            <div class="meta"><span class="chip live">Live</span><span class="cap stack">Next.js · eBird&nbsp;API · Claude&nbsp;API</span></div>
+            <h3>Personal Bird Tracker</h3>
+            <p class="lede">A field companion for birding Central Park: what has been seen lately, how to tell look-alikes apart, and a log of your walks.</p>
+            <div class="pd">
+              <div><span class="hello">(Problem)</span><p>Beginner birders see something and can’t put a name to it.</p></div>
+              <div><span class="hello">(Decision)</span><p>Identify by color, size and place, or from a photo with Claude, and keep your log on your own device.</p></div>
+            </div>
+            <div class="built"><span class="hello">(Built with)</span><p class="cap">Next.js · React · TypeScript · Tailwind · Zustand · Zod · Claude&nbsp;API · eBird&nbsp;API · Wikimedia&nbsp;Commons · Vercel · Claude&nbsp;Code</p></div>
+            <div class="links"><a href="https://nyc-bird-tracker.vercel.app" target="_blank" rel="noopener">Try the app</a><span>·</span><span class="soon">Case study soon</span></div>
+          </div>
+        </article>
+    </section>
+    <div class="next cap">Next, soon</div>
+  </main>
+
+  <footer class="foot cap" id="contact">
+    <span><a href="mailto:contact@puriyamirza.com">Email</a> · <a href="https://github.com/PuriyaMirza" target="_blank" rel="noopener">GitHub</a></span>
+    <span class="copy">© 2026 Puriya Mirza</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const layer = document.getElementById('lines');
+  const frame = document.querySelector('.frame');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const DUR = 1400, RISE = 0.38;
+  let lines = [], raf = 0, bag = [], last = -1;
+
+  const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);   // S-curve
+
+  function build() {
+    const n = parseInt(getComputedStyle(root).getPropertyValue('--lines'), 10) || 18;
+    const r = frame.getBoundingClientRect();
+    layer.innerHTML = ''; lines = []; bag = [];
+    for (let c = 0; c <= n; c++) {
+      const x = Math.round(r.left + (r.width / n) * c);
+      const el = document.createElement('div');
+      el.className = 'line'; el.style.left = x + 'px';
+      const hi = document.createElement('i');
+      el.appendChild(hi); layer.appendChild(el);
+      lines.push({ hi, start: -1e9, y: 0 });
+    }
+  }
+
+  function tick(now) {
+    let live = false;
+    const h = lines.length ? lines[0].hi.offsetHeight : 0;
+    for (const L of lines) {
+      const t = (now - L.start) / DUR;
+      let v = 0;
+      if (t >= 0 && t < 1) { v = t < RISE ? smooth(t / RISE) : 1 - smooth((t - RISE) / (1 - RISE)); live = true; }
+      L.hi.style.opacity = v.toFixed(3);
+      if (v > 0) L.hi.style.transform = `translateY(${Math.round(L.y - h / 2)}px)`;
+    }
+    raf = live ? requestAnimationFrame(tick) : 0;
+  }
+
+  // One line per second, shuffled so every line gets a turn before any repeats.
+  function nextIndex() {
+    if (!bag.length) {
+      bag = lines.map((_, i) => i);
+      for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+      if (bag.length > 1 && bag[bag.length - 1] === last) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+    }
+    return bag.pop();
+  }
+  function beat() {
+    if (reduce.matches || document.hidden || !lines.length) return;
+    const i = nextIndex(); if (i == null || !lines[i]) return;
+    last = i;
+    const L = lines[i];
+    L.start = performance.now();
+    L.y = window.innerHeight * (0.15 + Math.random() * 0.7);
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('resize', build);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(build);
+  build();
+  setInterval(beat, 1000);
+})();
+</script>
+</body>
+</html>
