@@ -70,13 +70,15 @@ a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
 .intro .note p { margin: 8px 0 0; color: var(--stone); }
 
 /* Timeline of topics */
-.tl { position: relative; padding-bottom: 60px; }
-.tl::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246,243,238,0.2); left: calc(100% * var(--spine-f)); }
+.tl { position: relative; padding-bottom: 60px; --sx: max(113px, calc(100% * var(--spine-f))); }
+.tl::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(246,243,238,0.2); left: var(--sx); }
 .topic { position: relative; padding-top: 0; }
-.topic + .topic { margin-top: 170px; }
+.topic:not(:last-of-type) { padding-bottom: 170px; }   /* gap lives inside the outgoing topic, so its marker stays stuck until the next one arrives */
 .ghost { margin: 0 0 0 38%; font-family: var(--display); font-style: italic; font-weight: 300; font-size: 100px; line-height: 1.2; color: var(--paper); opacity: 0.05; user-select: none; }
-.tlabel { position: absolute; top: 52px; left: calc(100% * var(--spine-f) - 121px); width: 96px; text-align: right; color: var(--brass); }
-.dot { position: absolute; top: 55px; left: calc(100% * var(--spine-f) - 5px); width: 11px; height: 11px; border-radius: 50%; background: var(--brass); }
+/* Topic marker: label left of the dot. On desktop it rides up with the page, sticks at mid-screen, and is pushed out by the next topic's marker. */
+.marker { position: sticky; top: calc(50vh - 60px); height: 0; z-index: 2; }
+.tlabel { position: absolute; top: 52px; right: calc(100% - var(--sx) + 24px); white-space: nowrap; text-align: right; color: var(--brass); }
+.dot { position: absolute; top: 55px; left: calc(var(--sx) - 5px); width: 11px; height: 11px; border-radius: 50%; background: var(--brass); }
 
 .entry { display: grid; align-items: start; margin-top: 60px; }
 .entry + .entry { margin-top: 155px; }
@@ -103,17 +105,12 @@ a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
 
 /* Desktop placements, proportional to the 1360px Figma frame */
 @media (min-width: 1000px) {
-  .entry { grid-template-columns: 162fr 425fr 48fr 620fr 105fr; }
+  .entry { grid-template-columns: minmax(150px, 162fr) 425fr 48fr 620fr 105fr; }
   .entry .shots { grid-column: 2; grid-row: 1; }
   .entry .text { grid-column: 4; grid-row: 1; padding-top: 26px; }
-  .entry.flip { grid-template-columns: 152fr 620fr 55fr 425fr 108fr; }
+  .entry.flip { grid-template-columns: minmax(150px, 152fr) 620fr 55fr 425fr 108fr; }
   .entry.flip .text { grid-column: 2; }
   .entry.flip .shots { grid-column: 4; }
-}
-/* Mid-width desktops: not enough room left of the spine, so the topic label sits above the ghost word */
-@media (min-width: 1000px) and (max-width: 1399px) {
-  .tlabel { position: static; display: block; width: auto; text-align: left; padding-left: calc(100% * var(--spine-f) + 24px); margin-bottom: -8px; }
-  .dot { top: 7px; }
 }
 /* Narrow: stacked beside the spine */
 @media (max-width: 999px) {
@@ -121,7 +118,9 @@ a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
   .intro { flex-direction: column; padding-block: 48px 80px; }
   .intro .note { flex: none; padding-top: 0; max-width: 34ch; }
   .ghost { margin-left: 28px; font-size: clamp(64px, 16vw, 100px); }
-  .tlabel { position: static; display: block; width: auto; text-align: left; padding-left: 28px; margin-bottom: -8px; }
+  .tl { --sx: 0px; }
+  .marker { position: relative; top: auto; height: auto; }
+  .tlabel { position: static; display: block; text-align: left; padding-left: 28px; margin-bottom: -8px; }
   .dot { top: 7px; }
   .entry { margin-top: 32px; padding-left: 28px; row-gap: 28px; }
   .entry + .entry { margin-top: 88px; }
@@ -162,7 +161,7 @@ a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
 
   <main class="tl" id="work">
     <section class="topic" aria-labelledby="t-language">
-      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Language</span>
+      <div class="marker" aria-hidden="true"><span class="dot"></span><span class="cap tlabel">Language</span></div>
       <h2 class="ghost" id="t-language">Language</h2>
         <article class="entry translator">
           <div class="shots">
@@ -183,7 +182,7 @@ a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
         </article>
     </section>
     <section class="topic" aria-labelledby="t-travel">
-      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Travel</span>
+      <div class="marker" aria-hidden="true"><span class="dot"></span><span class="cap tlabel">Travel</span></div>
       <h2 class="ghost" id="t-travel">Travel</h2>
         <article class="entry landing flip">
           <div class="shots">
@@ -218,7 +217,7 @@ a:focus-visible { outline: 1px solid var(--brass); outline-offset: 4px; }
         </article>
     </section>
     <section class="topic" aria-labelledby="t-nature">
-      <span class="dot" aria-hidden="true"></span><span class="cap tlabel" aria-hidden="true">Nature</span>
+      <div class="marker" aria-hidden="true"><span class="dot"></span><span class="cap tlabel">Nature</span></div>
       <h2 class="ghost" id="t-nature">Nature</h2>
         <article class="entry weather flip">
           <div class="shots">
